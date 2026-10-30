@@ -1,0 +1,252 @@
+<meta name="dash-one-writer">
+<style>
+#dash-root .ss { font-family: var(--font-anthropic-sans); color: var(--color-fg); display: flex; flex-direction: column; gap: var(--cds-gap-lg); }
+#dash-root .ss h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; }
+#dash-root .ss .lede { margin: var(--cds-gap-xs) 0 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); max-width: 60rem; }
+#dash-root .ss .lede b { color: var(--color-fg); font-weight: 600; }
+#dash-root .ss .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: var(--cds-gap-md); }
+#dash-root .ss .tile, #dash-root .ss .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; }
+#dash-root .ss .tile .lbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+#dash-root .ss .tile .num { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; margin-top: var(--cds-gap-xs); min-height: 1.3em; }
+#dash-root .ss .tile .num.bad { color: var(--color-bad); }
+#dash-root .ss .tile .sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: var(--cds-gap-xs); }
+#dash-root .ss .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+#dash-root .ss h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+#dash-root .ss .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: var(--cds-gap-xs) 0 var(--cds-gap-md); }
+#dash-root .ss .chart { position: relative; min-height: 220px; }
+#dash-root .ss .tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+#dash-root .ss .tip .k { color: var(--cds-text-secondary); }
+#dash-root .ss .tbox { max-height: 26rem; overflow: auto; }
+#dash-root .ss table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+#dash-root .ss th { position: sticky; top: 0; background: var(--color-panel); text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+#dash-root .ss td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+#dash-root .ss .r { text-align: right; }
+#dash-root .ss .pill { display: inline-block; padding: 0 var(--cds-pad-sm); border-radius: 999px; font-weight: 600; white-space: nowrap; }
+#dash-root .ss .s-out { background: var(--cds-chart-status-critical); color: #fff; }
+#dash-root .ss .s-crit { color: var(--color-bad); }
+#dash-root .ss .s-reo { color: var(--color-warn); }
+#dash-root .ss .s-ok { color: var(--color-ok); }
+#dash-root .ss .s-over { color: var(--color-fg-muted); }
+#dash-root .ss .appr-auto { color: var(--color-ok); }
+#dash-root .ss .appr-ops { color: var(--color-warn); }
+#dash-root .ss .appr-fin { color: var(--color-bad); }
+#dash-root .ss .filters { display: flex; gap: var(--cds-gap-sm); flex-wrap: wrap; margin-bottom: var(--cds-gap-sm); }
+#dash-root .ss .filters button { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: 999px; background: transparent; color: var(--color-fg); cursor: pointer; }
+#dash-root .ss .filters button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+#dash-root .ss .foot { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+</style>
+
+<div class="ss">
+  <header>
+    <h1>StockSense – daily replenishment run</h1>
+    <p class="lede">Run of 30 Oct 2026 on the master inventory list: <b data-draw="t-urgent" data-source="kpis" data-field="urgent">—</b> items are out of stock or critical, <b data-draw="t-po" data-source="kpis" data-field="po_count">—</b> purchase orders worth <b data-draw="t-poval" data-source="kpis" data-field="po_value">—</b> are drafted (<b data-draw="t-appr" data-source="kpis" data-field="approvals">—</b> need a manager's approval), and <b data-draw="t-holds" data-source="kpis" data-field="holds">—</b> items are held for a recount.</p>
+  </header>
+
+  <section class="tiles" aria-label="Headline figures">
+    <div class="tile"><div class="lbl">Items scanned</div><div class="num" data-draw="k-skus" data-source="kpis" data-field="skus">—</div><div class="sub">Central store + 6 sites</div></div>
+    <div class="tile"><div class="lbl">Out of stock or critical</div><div class="num bad" data-draw="k-urgent" data-source="kpis" data-field="urgent">—</div><div class="sub">At or below safety stock</div></div>
+    <div class="tile"><div class="lbl">Items to reorder</div><div class="num" data-draw="k-reorder" data-source="kpis" data-field="reorder">—</div><div class="sub">At or below reorder point</div></div>
+    <div class="tile"><div class="lbl">Draft orders (S$)</div><div class="num" data-draw="k-poval" data-source="kpis" data-field="po_value">—</div><div class="sub">Excludes items on hold</div></div>
+    <div class="tile"><div class="lbl">Transfers proposed</div><div class="num" data-draw="k-tr" data-source="kpis" data-field="transfers">—</div><div class="sub">Central store → sites, before buying</div></div>
+    <div class="tile"><div class="lbl">Stock value held (S$)</div><div class="num" data-draw="k-val" data-source="kpis" data-field="stock_value">—</div><div class="sub">On hand × unit cost</div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2 id="status">Stock status</h2>
+      <p class="note">Number of items in each status. Reorder point = daily usage × lead time + 7 days safety stock.</p>
+      <div class="chart" data-draw="c-status" data-source="by_status"></div>
+    </div>
+    <div class="card">
+      <h2 id="category">Stock value by category</h2>
+      <p class="note">S$ of stock on hand across central store and sites.</p>
+      <div class="chart" data-draw="c-cat" data-source="by_category"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 id="orders">Purchase orders for approval</h2>
+    <p class="note">One order per supplier. Up to S$500 is sent automatically; up to S$5,000 goes to the Operations Manager; above that to Finance / CEO. These go to the WhatsApp group for one-tap approval.</p>
+    <div class="tbox">
+      <table data-source="po_summary" data-row-key="po">
+        <thead><tr><th data-field="po">PO no.</th><th data-field="supplier">Supplier</th><th data-field="items">Items</th><th data-field="total" class="r">Total (S$)</th><th data-field="approval">Approval route</th><th data-field="eta">ETA</th></tr></thead>
+        <tbody data-draw="tb-po"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h2 id="holds">On hold – supervisor recount</h2>
+      <p class="note">Issues logged in the last 7 days differ from expected usage by more than 15%, so ordering waits for a recount.</p>
+      <div class="tbox">
+        <table data-source="holds" data-row-key="sku">
+          <thead><tr><th data-field="item">Item</th><th data-field="status">Status</th><th data-field="order_qty" class="r">Qty if confirmed</th><th data-field="reason">Why</th></tr></thead>
+          <tbody data-draw="tb-holds"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2 id="transfers">Transfers from the central store</h2>
+      <p class="note">Sites are below their 14-day need while the central store holds more than its safety stock.</p>
+      <div class="tbox">
+        <table data-source="transfers" data-row-key="sku">
+          <thead><tr><th data-field="item">Item</th><th data-field="qty" class="r">Qty</th><th data-field="unit">Unit</th></tr></thead>
+          <tbody data-draw="tb-tr"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 id="all-items">All items</h2>
+    <p class="note">Every item in the master inventory list after this run.</p>
+    <div class="filters" role="group" aria-label="Filter by status">
+      <button type="button" data-filter="" aria-pressed="true">All</button>
+      <button type="button" data-filter="OUT OF STOCK" aria-pressed="false">Out of stock</button>
+      <button type="button" data-filter="CRITICAL" aria-pressed="false">Critical</button>
+      <button type="button" data-filter="REORDER" aria-pressed="false">Reorder</button>
+      <button type="button" data-filter="OK" aria-pressed="false">OK</button>
+      <button type="button" data-filter="OVERSTOCK" aria-pressed="false">Overstock</button>
+    </div>
+    <div class="tbox">
+      <table data-source="stock" data-row-key="sku">
+        <thead><tr><th data-field="sku">SKU</th><th data-field="desc">Item</th><th data-field="cat">Category</th><th data-field="central" class="r">Central</th><th data-field="sites" class="r">At sites</th><th data-field="on_hand" class="r">On hand</th><th data-field="rop" class="r">Reorder pt</th><th data-field="cover" class="r">Days cover</th><th data-field="status">Status</th></tr></thead>
+        <tbody data-draw="tb-stock"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Sample data: the master inventory list is an illustrative case built for this blueprint, not real company figures.</p>
+</div>
+
+<script>
+  dash.calc('kpis', {
+    title: 'Run headline figures',
+    description: 'Counts and S$ totals across all items, orders, transfers and holds from this run.',
+    inputs: ['stock', 'purchase_orders', 'transfers', 'holds'],
+    fn: (stock, purchase_orders, transfers, holds) => {
+      const urgent = stock.filter((s) => s.status === 'OUT OF STOCK' || s.status === 'CRITICAL').length;
+      const reorder = stock.filter((s) => ['OUT OF STOCK', 'CRITICAL', 'REORDER'].includes(s.status)).length;
+      const pos = new Map();
+      purchase_orders.forEach((l) => pos.set(l.po, l.approval));
+      return [{
+        skus: stock.length,
+        urgent,
+        reorder,
+        stock_value: Math.round(stock.reduce((a, s) => a + Number(s.value), 0) * 100) / 100,
+        po_count: pos.size,
+        po_value: Math.round(purchase_orders.reduce((a, l) => a + Number(l.line_value), 0) * 100) / 100,
+        approvals: [...pos.values()].filter((a) => !String(a).startsWith('Auto')).length,
+        transfers: transfers.length,
+        holds: holds.length
+      }];
+    }
+  });
+  dash.calc('by_status', {
+    title: 'Items by stock status',
+    description: 'Number of items in each status.',
+    inputs: ['stock'],
+    fn: (stock) => ['OUT OF STOCK', 'CRITICAL', 'REORDER', 'OK', 'OVERSTOCK'].map((status) => ({status, items: stock.filter((s) => s.status === status).length}))
+  });
+  dash.calc('by_category', {
+    title: 'Stock value by category',
+    description: 'Sum of on-hand stock value (S$) per category.',
+    inputs: ['stock'],
+    fn: (stock) => {
+      const m = new Map();
+      stock.forEach((s) => m.set(s.cat, (m.get(s.cat) || 0) + Number(s.value)));
+      return [...m].map(([cat, value]) => ({cat, value: Math.round(value * 100) / 100})).sort((a, b) => b.value - a.value);
+    }
+  });
+  dash.calc('po_summary', {
+    title: 'Purchase orders',
+    description: 'Order lines grouped into one purchase order per supplier.',
+    inputs: ['purchase_orders'],
+    fn: (purchase_orders) => {
+      const m = new Map();
+      purchase_orders.forEach((l) => {
+        const p = m.get(l.po) || {po: l.po, supplier: l.supplier, approval: l.approval, eta: l.eta, items: '', total: Number(l.po_total)};
+        p.items += (p.items ? '; ' : '') + l.item + ' × ' + l.qty;
+        m.set(l.po, p);
+      });
+      return [...m.values()];
+    }
+  });
+</script>
+
+<script>
+  const fmtN = d3.format(',');
+  const fmtS = d3.format(',.2f');
+  const fmtS0 = d3.format(',.0f');
+  const one = (id) => { const d = dash.data(id); return d.status === 'ok' && d.data && d.data.length ? d.data[0] : null; };
+  const num = (field, f) => (el) => { const k = one('kpis'); el.textContent = k ? f(k[field]) : '—'; };
+  [['t-urgent', 'urgent', fmtN], ['t-po', 'po_count', fmtN], ['t-poval', 'po_value', (v) => 'S$' + fmtS(v)], ['t-appr', 'approvals', fmtN], ['t-holds', 'holds', fmtN],
+   ['k-skus', 'skus', fmtN], ['k-urgent', 'urgent', fmtN], ['k-reorder', 'reorder', fmtN], ['k-poval', 'po_value', fmtS0], ['k-tr', 'transfers', fmtN], ['k-val', 'stock_value', fmtS0]]
+    .forEach(([name, field, f]) => dash.draw(name, num(field, f)));
+
+  const statusClass = {'OUT OF STOCK': 's-out', 'CRITICAL': 's-crit', 'REORDER': 's-reo', 'OK': 's-ok', 'OVERSTOCK': 's-over'};
+  const statusColor = (s) => s === 'OUT OF STOCK' || s === 'CRITICAL' ? 'var(--cds-chart-status-critical)' : s === 'REORDER' ? dash.colors[2] : s === 'OK' ? dash.colors[0] : 'var(--cds-chart-muted)';
+
+  function hbars(el, rows, key, val, color, fmt, label) {
+    el.replaceChildren();
+    if (!rows) { el.textContent = '—'; return; }
+    const w = el.clientWidth || 320, bh = 26, gap = 10, h = rows.length * (bh + gap);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${w} ${h}`).attr('font-family', 'var(--font-anthropic-sans)');
+    const probe = svg.append('text').attr('font-size', 12);
+    const left = d3.max(rows, (r) => { probe.text(r[key]); return probe.node().getComputedTextLength(); }) + 10;
+    probe.text(fmt(d3.max(rows, (r) => r[val])));
+    const right = probe.node().getComputedTextLength() + 10;
+    probe.remove();
+    const x = d3.scaleLinear([0, d3.max(rows, (r) => r[val]) || 1], [0, Math.max(10, w - left - right)]);
+    const tip = d3.select(el).append('div').attr('class', 'tip').style('display', 'none');
+    const g = svg.selectAll('g').data(rows).join('g').attr('transform', (r, i) => `translate(0,${i * (bh + gap)})`);
+    g.append('text').attr('x', left - 10).attr('y', bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end').attr('font-size', 12).attr('fill', 'var(--color-fg)').text((r) => r[key]);
+    g.append('rect').attr('x', left).attr('height', bh).attr('width', (r) => Math.max(1, x(r[val]))).attr('rx', 4).attr('fill', (r) => color(r))
+      .on('mousemove', (ev, r) => {
+        const [mx, my] = d3.pointer(ev, el);
+        tip.style('display', null).selectAll('*').remove();
+        tip.append('div').attr('class', 'k').text(r[key]);
+        tip.append('div').text(label + ': ' + fmt(r[val]));
+        const tw = tip.node().offsetWidth;
+        tip.style('left', Math.min(mx + 12, el.clientWidth - tw) + 'px').style('top', (my + 12) + 'px');
+      })
+      .on('mouseleave', () => tip.style('display', 'none'));
+    g.append('text').attr('x', (r) => left + x(r[val]) + 6).attr('y', bh / 2).attr('dy', '0.35em').attr('font-size', 12).attr('fill', 'var(--color-fg-muted)').text((r) => fmt(r[val]));
+  }
+  dash.draw('c-status', (el) => { const d = dash.data('by_status'); hbars(el, d.status === 'ok' ? d.data : null, 'status', 'items', (r) => statusColor(r.status), fmtN, 'Items'); });
+  dash.draw('c-cat', (el) => { const d = dash.data('by_category'); hbars(el, d.status === 'ok' ? d.data : null, 'cat', 'value', () => dash.colors[0], (v) => 'S$' + fmtS0(v), 'Stock value'); });
+
+  function fillRows(el, id, cols, filter) {
+    el.replaceChildren();
+    const d = dash.data(id);
+    if (d.status !== 'ok') return;
+    (filter ? d.data.filter(filter) : d.data).forEach((r) => {
+      const tr = document.createElement('tr');
+      if (r.sku != null && id !== 'po_summary') tr.dataset.key = String(r.sku);
+      cols.forEach(([f, cls, fmt, extra]) => {
+        const td = document.createElement('td');
+        if (cls) td.className = cls;
+        const v = fmt ? fmt(r[f]) : (r[f] == null ? '–' : String(r[f]));
+        if (extra) { const s = document.createElement('span'); s.className = extra(r[f]); s.textContent = v; td.append(s); } else td.textContent = v;
+        tr.append(td);
+      });
+      el.append(tr);
+    });
+  }
+  const pill = (s) => 'pill ' + (statusClass[s] || '');
+  const appr = (a) => String(a).startsWith('Auto') ? 'appr-auto' : String(a).startsWith('Finance') ? 'appr-fin' : 'appr-ops';
+  const date = (v) => d3.utcFormat('%-d %b')(new Date(v));
+  dash.draw('tb-po', (el) => fillRows(el, 'po_summary', [['po'], ['supplier'], ['items'], ['total', 'r', fmtS], ['approval', '', null, appr], ['eta', '', date]]));
+  dash.draw('tb-holds', (el) => fillRows(el, 'holds', [['item'], ['status', '', null, pill], ['order_qty', 'r', fmtN], ['reason']]));
+  dash.draw('tb-tr', (el) => fillRows(el, 'transfers', [['item'], ['qty', 'r', fmtN], ['unit']]));
+
+  let statusFilter = '';
+  dash.draw('tb-stock', (el) => fillRows(el, 'stock', [['sku'], ['desc'], ['cat'], ['central', 'r', fmtN], ['sites', 'r', fmtN], ['on_hand', 'r', fmtN], ['rop', 'r', fmtN], ['cover', 'r', (v) => v == null ? '–' : d3.format('.1f')(v)], ['status', '', null, pill]],
+    statusFilter ? (r) => r.status === statusFilter : null));
+  document.querySelectorAll('#dash-root .filters button').forEach((b) => b.addEventListener('click', () => {
+    statusFilter = b.dataset.filter;
+    document.querySelectorAll('#dash-root .filters button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    dash.draw('tb-stock');
+  }));
+</script>

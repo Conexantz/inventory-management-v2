@@ -1,0 +1,53 @@
+*StockSense – Daily Replenishment 30 Oct 2026*
+Scanned 36 SKUs: 1 out of stock, 5 critical, 8 to reorder.
+
+*Purchase orders drafted (5) – S$8,548.50*
+
+*PO-261030-01* · CleanChem Supplies Pte Ltd · S$1,692.00
+Approval: Operations Manager · ETA 04 Nov
+  • Glass Cleaner 5L – 50 can  (S$840.00)
+  • Hand Soap Refill 5L – 60 can  (S$852.00)
+
+*PO-261030-02* · Paperlink Trading · S$2,990.00
+Approval: Operations Manager · ETA 02 Nov
+  • Hand Towel M-Fold (16 packs) – 70 carton  (S$2,240.00)
+  • Kitchen Roll (24 rolls) – 25 carton  (S$750.00)
+
+*PO-261030-03* · GreenBag Packaging · S$1,890.00
+Approval: Operations Manager · ETA 03 Nov
+  • Trash Bag Clear 24x30 (500pcs) – 40 carton  (S$1,560.00)
+  • Biohazard Bag Yellow (100pcs) – 15 pack  (S$330.00)
+
+*PO-261030-04* · SafeHands PPE Distributors · S$1,470.00
+Approval: Operations Manager · ETA 06 Nov
+  • Nitrile Gloves L (100pcs) – 150 box  (S$1,470.00)
+
+*PO-261030-05* · MachinePro Services · S$506.50
+Approval: Operations Manager · ETA 13 Nov
+  • Vacuum Filter Bag (10pcs) – 15 pack  (S$277.50)
+  • Scrubber Squeegee Blade Set – 1 set  (S$85.00)
+  • Vacuum Hose 2.5m – 3 piece  (S$144.00)
+
+*On hold – recount needed (5)*
+  • Toilet Bowl Cleaner 1L: Issues logged 24 vs expected 42 (-43%)
+  • Disinfectant (Quat) 5L: Issues logged 6 vs expected 21 (-71%)
+  • Jumbo Toilet Roll (12 rolls): Issues logged 8 vs expected 46 (-82%)
+  • Nitrile Gloves M (100pcs): Issues logged 12 vs expected 56 (-79%)
+  • Flat Mop Pad 40cm: Variance -40% vs expected usage
+
+*Transfers from central store (10)*
+  • All-Purpose Cleaner 5L – 12 can
+  • Floor Cleaner Neutral pH 20L – 6 pail
+  • Degreaser Heavy Duty 5L – 4 can
+  • Carpet Shampoo 5L – 1 can
+  • Air Freshener Aerosol 300ml – 13 can
+  • Facial Tissue Box (48 boxes) – 3 carton
+  • Sanitary Bin Liner (200pcs) – 4 pack
+  • Surgical Mask 3-ply (50pcs) – 19 box
+  • Microfibre Cloth (pack of 10) – 1 pack
+  • Scrubber Pad Red 17in (5pcs) – 2 pack
+
+*Expiry alerts*
+  • CHE-005 Disinfectant (Quat) 5L: Expiring soon (60 days)
+
+Reply *APPROVE <PO no.>* or *HOLD <PO no.>*. POs ≤ S$500 are auto-sent.

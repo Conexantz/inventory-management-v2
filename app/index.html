@@ -1,0 +1,1065 @@
+<title>StockSense Orders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: store-room requisition desk. Sticky header with role + branch; tabbed work areas; catalogue left, requisition slip right. */
+:root {
+  --bg: #eef3f1;
+  --panel: #ffffff;
+  --sunk: #e4ebe8;
+  --ink: #13221e;
+  --muted: #56675f;
+  --line: #cfdad5;
+  --accent: #0d6b5f;
+  --accent-ink: #ffffff;
+  --accent-soft: #d6ece7;
+  --ok: #1d7a3d;
+  --ok-soft: #dcf0e2;
+  --warn: #9a5800;
+  --warn-soft: #fbecd2;
+  --bad: #b3261e;
+  --bad-soft: #f8dcd9;
+  --font-display: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1715; --panel: #16211e; --sunk: #1c2a26; --ink: #e3ece8; --muted: #93a59d; --line: #2b3b36;
+    --accent: #3fb3a1; --accent-ink: #06231e; --accent-soft: #173a34;
+    --ok: #63c787; --ok-soft: #173525; --warn: #e3a54b; --warn-soft: #3a2a12; --bad: #f2867c; --bad-soft: #3d1c19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1715; --panel: #16211e; --sunk: #1c2a26; --ink: #e3ece8; --muted: #93a59d; --line: #2b3b36;
+  --accent: #3fb3a1; --accent-ink: #06231e; --accent-soft: #173a34;
+  --ok: #63c787; --ok-soft: #173525; --warn: #e3a54b; --warn-soft: #3a2a12; --bad: #f2867c; --bad-soft: #3d1c19;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin-inline: auto; }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.num { text-align: right; white-space: nowrap; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-block: 12px; }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand h1 { font-size: 24px; font-weight: 700; }
+.brand span { color: var(--muted); font-size: 12px; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--sunk); color: var(--ink); white-space: nowrap; }
+.chip.gm { background: var(--accent); color: var(--accent-ink); }
+.who label { font-size: 12px; color: var(--muted); }
+.who select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 10px; font-size: 12px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+nav.tabs { display: flex; gap: 2px; overflow-x: auto; }
+nav.tabs button { border: 0; background: transparent; padding: 10px 14px; font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs .count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 999px; background: var(--bad); color: #fff; font-family: var(--font-body); font-size: 11px; line-height: 18px; text-align: center; }
+
+main { padding-block: 20px 48px; display: flex; flex-direction: column; gap: 20px; }
+.notice { padding: 10px 14px; border-radius: var(--r); background: var(--sunk); color: var(--muted); font-size: 13px; }
+.notice.bad { background: var(--bad-soft); color: var(--bad); }
+.notice.ok { background: var(--ok-soft); color: var(--ok); }
+
+/* summary strip */
+.strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.stat .v { font-family: var(--font-display); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.stat .v.bad { color: var(--bad); }
+
+/* tools */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar input[type="search"], .toolbar select { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); min-width: 0; }
+.toolbar input[type="search"] { flex: 1 1 220px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.panel-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; padding: 14px 16px 10px; }
+.panel-h h2 { font-size: 20px; font-weight: 600; }
+.panel-h p { margin: 0; color: var(--muted); font-size: 12px; }
+.tscroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td .sub { display: block; font-size: 11px; color: var(--muted); }
+th.num, td.num { text-align: right; }
+.mine { background: var(--accent-soft); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.p-ok { background: var(--ok-soft); color: var(--ok); }
+.p-warn { background: var(--warn-soft); color: var(--warn); }
+.p-bad { background: var(--bad-soft); color: var(--bad); }
+.p-pend { background: var(--sunk); color: var(--ink); }
+
+/* order desk */
+.desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+.catalog { max-height: 640px; overflow: auto; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.qty button { width: 28px; height: 28px; border: 0; background: var(--sunk); font-weight: 600; }
+.qty input { width: 52px; height: 28px; border: 0; text-align: center; font-family: var(--font-mono); background: var(--panel); }
+.slip { position: sticky; top: 120px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.slip h2 { font-size: 20px; }
+.slip .meta { font-size: 12px; color: var(--muted); }
+.slip ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.slip li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.slip li .d { font-size: 13px; }
+.slip li .q { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.slip li .x { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 0; justify-self: end; text-decoration: underline; }
+.total { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+.total .mono { font-size: 20px; }
+textarea { width: 100%; min-height: 60px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); resize: vertical; }
+.btn { border: 1px solid var(--line); background: var(--panel); padding: 8px 14px; border-radius: 6px; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.danger { color: var(--bad); border-color: var(--bad); background: var(--panel); }
+.btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 18px; margin-bottom: 4px; }
+
+/* approval cards */
+.queue { display: flex; flex-direction: column; gap: 14px; }
+.bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 16px; margin-bottom: 14px; }
+.bulk label.all { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.bulk .info { flex: 1 1 220px; min-width: 0; font-size: 13px; color: var(--muted); }
+.bulk .info b { color: var(--ink); }
+.bulk .acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bulk input[type="text"] { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); width: 220px; max-width: 100%; }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+tr.decided td { opacity: .72; }
+.order.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.order-h .pick { display: inline-flex; align-items: center; gap: 10px; }
+.order { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.order-h { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; padding: 12px 16px; background: var(--sunk); }
+.order-h h3 { font-size: 18px; font-weight: 600; }
+.order-h .meta { font-size: 12px; color: var(--muted); }
+.order-f { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--line); }
+.order-f .note { font-size: 13px; color: var(--muted); flex: 1 1 240px; min-width: 0; }
+.order-f .acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.order-f input { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); min-width: 0; width: 220px; max-width: 100%; }
+.short { color: var(--bad); font-weight: 600; }
+.why { display: block; font-size: 11px; color: var(--warn); }
+.over { display: block; font-size: 11px; color: var(--accent); font-weight: 600; }
+.whyin { width: 100%; margin-top: 4px; padding: 5px 8px; border: 1px solid var(--warn); border-radius: 6px; background: var(--panel); font-size: 12px; grid-column: 1 / -1; }
+.whyin.missing { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
+.chk { display: block; font-size: 12px; line-height: 1.35; margin-top: 3px; max-width: 34ch; }
+.chk.ok { color: var(--ok); } .chk.warn { color: var(--warn); } .chk.bad { color: var(--bad); font-weight: 600; }
+.review { margin: 0 16px 14px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.review.ok { background: var(--ok-soft); border-color: transparent; }
+.review.warn { background: var(--warn-soft); border-color: transparent; }
+.review.bad { background: var(--bad-soft); border-color: var(--bad); }
+.review h4 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.review.ok h4 { color: var(--ok); } .review.warn h4 { color: var(--warn); } .review.bad h4 { color: var(--bad); }
+.review p { margin: 0; font-size: 13px; }
+.review ul { margin: 0; padding-left: 18px; font-size: 13px; }
+.tag-low { background: var(--warn-soft); color: var(--warn); }
+.legend { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .order, .stat { transition: border-color .2s; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand"><h1>StockSense Orders</h1><span>Central store → branch requisitions</span></div>
+      <div class="who">
+        <span id="roleChip" class="chip">Loading…</span>
+        <div id="viewAs" class="seg" hidden role="group" aria-label="View as">
+          <button type="button" id="asBranch" aria-pressed="false">Branch view</button>
+          <button type="button" id="asGm" aria-pressed="true">GM view</button>
+        </div>
+        <label for="siteSel">My branch</label>
+        <select id="siteSel"></select>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-low" aria-selected="true" data-tab="low">Low stock<span id="lowCount" class="count" hidden></span></button>
+      <button type="button" role="tab" id="tab-order" aria-selected="false" data-tab="order">Place order</button>
+      <button type="button" role="tab" id="tab-approve" aria-selected="false" data-tab="approve">Approvals<span id="pendCount" class="count" hidden></span></button>
+      <button type="button" role="tab" id="tab-orders" aria-selected="false" data-tab="orders">Order history</button>
+      <button type="button" role="tab" id="tab-supply" aria-selected="false" data-tab="supply" hidden>Supplier orders<span id="supCount" class="count" hidden></span></button>
+      <button type="button" role="tab" id="tab-stock" aria-selected="false" data-tab="stock">Inventory &amp; costing</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="msg" class="notice" hidden></div>
+
+  <!-- LOW STOCK -->
+  <section id="view-low" data-view="low">
+    <div class="strip" id="lowStrip"></div>
+    <div class="panel" id="lowBranch">
+      <div class="panel-h">
+        <h2 id="lowTitle">Running low at my branch</h2>
+        <p>Flagged automatically when a branch holds less than 7 days of its usage. The recommended quantity tops it up to 14 days; you can order more if you need to.</p>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th><input type="checkbox" id="lowAll" aria-label="Select all suggestions" checked></th><th>Item</th><th class="num">Balance</th><th class="num">14-day level</th><th class="num">Days left</th><th class="num">Recommended</th><th>Order qty</th><th class="num">Central</th><th class="num">Value</th><th>Status</th></tr></thead>
+          <tbody id="lowBody"></tbody>
+        </table>
+        <div id="lowEmpty" class="empty" hidden><strong>Nothing running low</strong><span id="lowEmptyText">Every item at this branch covers at least 7 days of usage.</span></div>
+      </div>
+      <div class="order-f">
+        <div class="note" id="lowSel">—</div>
+        <div class="acts"><button type="button" class="btn primary" id="lowToOrder" disabled>Add selected to my order</button></div>
+      </div>
+    </div>
+    <div class="panel" id="lowGm" hidden>
+      <div class="panel-h"><h2>Low stock by branch</h2><p>What each branch is short of, and whether it has already asked for it.</p></div>
+      <div class="tscroll"><table>
+        <thead><tr><th>Branch</th><th class="num">Items low</th><th class="num">Not yet requested</th><th class="num">Suggested value</th><th class="num">Pending requests</th></tr></thead>
+        <tbody id="lowGmBody"></tbody>
+      </table></div>
+    </div>
+    <div class="panel" id="lowCentral" hidden>
+      <div class="panel-h"><h2>Central store at or below reorder point</h2><p>Buy these from suppliers so branch requests can be issued.</p></div>
+      <div class="tscroll"><table>
+        <thead><tr><th>Item</th><th class="num">Central</th><th class="num">Branch total</th><th class="num">Reorder point</th><th class="num">Unit cost</th><th>Status</th></tr></thead>
+        <tbody id="lowCentralBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- PLACE ORDER -->
+  <section id="view-order" data-view="order" hidden>
+    <div class="desk">
+      <div class="panel">
+        <div class="panel-h">
+          <h2>Catalogue</h2>
+          <p>Central store stock available to order. Your branch's balance is shown beside it.</p>
+        </div>
+        <div class="toolbar" style="padding: 0 16px 12px;">
+          <input type="search" id="catSearch" placeholder="Search item or SKU" aria-label="Search catalogue">
+          <select id="catFilter" aria-label="Category"><option value="">All categories</option></select>
+          <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;"><input type="checkbox" id="lowOnly"> Low at my branch</label>
+        </div>
+        <div class="catalog tscroll">
+          <table>
+            <thead><tr><th>Item</th><th class="num">Unit cost</th><th class="num">Central</th><th class="num" id="myColHead">My branch</th><th class="num">Recommended</th><th>Qty</th></tr></thead>
+            <tbody id="catBody"></tbody>
+          </table>
+          <div id="catEmpty" class="empty" hidden><strong>No stock list yet</strong>The inventory list will appear here once it has been loaded.</div>
+        </div>
+      </div>
+
+      <aside class="panel slip" aria-label="Requisition">
+        <div>
+          <h2>Requisition</h2>
+          <div class="meta" id="slipMeta">—</div>
+        </div>
+        <ul id="slipLines"></ul>
+        <div id="slipEmpty" class="legend">Add quantities in the catalogue to build your order.</div>
+        <div class="total"><span>Total</span><span class="mono" id="slipTotal">S$0.00</span></div>
+        <div class="legend" id="slipRoute"></div>
+        <label for="slipNote" class="legend">Note for the General Manager (optional)</label>
+        <textarea id="slipNote" placeholder="e.g. Extra deep-clean scheduled on Saturday"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn primary" id="submitOrder" disabled>Submit for approval</button>
+          <button type="button" class="btn" id="clearOrder">Clear</button>
+        </div>
+        <div id="slipMsg" class="notice" hidden></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- APPROVALS -->
+  <section id="view-approve" data-view="approve" hidden>
+    <div class="panel-h" style="padding:0 0 12px;">
+      <h2>Waiting for GM approval</h2>
+      <p>Approving issues the stock from the central store to the branch and updates both balances.</p>
+    </div>
+    <div id="gmOnly" class="notice" hidden>Only the General Manager can approve orders. You can follow your branch's orders under Order history.</div>
+    <div id="bulk" class="panel bulk" hidden>
+      <label class="all" for="selAll"><input type="checkbox" id="selAll"> <span id="selAllLabel">Select all</span></label>
+      <button type="button" class="btn" id="selOk">Select in-line only</button>
+      <div class="info" id="selInfo">Tick orders to approve or reject them together.</div>
+      <div class="acts" id="bulkActs">
+        <input type="text" id="bulkReason" placeholder="Reason (needed to reject)" aria-label="Reason for rejecting selected orders">
+        <button type="button" class="btn danger" id="bulkReject" disabled>Reject selected</button>
+        <button type="button" class="btn ok" id="bulkApprove" disabled>Approve selected</button>
+      </div>
+    </div>
+    <div id="queue" class="queue"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="view-orders" data-view="orders" hidden>
+    <div class="strip" id="spendStrip"></div>
+    <div class="panel">
+      <div class="panel-h"><h2>Orders</h2>
+        <div class="toolbar">
+          <select id="histSite" aria-label="Branch"><option value="">All branches</option></select>
+          <select id="histStatus" aria-label="Status"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="partial">Partly approved</option><option value="rejected">Rejected</option></select>
+        </div>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead><tr><th>Order</th><th>Branch</th><th>Requested by</th><th>Items</th><th class="num">Total (S$)</th><th>Status</th><th>Decided</th><th></th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+        <div id="histEmpty" class="empty" hidden><strong>No orders yet</strong>Orders appear here as soon as a branch manager submits one.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUPPLIER ORDERS -->
+  <section id="view-supply" data-view="supply" hidden>
+    <div class="strip" id="supStrip"></div>
+    <div class="panel">
+      <div class="panel-h">
+        <h2>Central store cover</h2>
+        <p>Safety stock is 7 days of total usage. An item is reordered when stock plus open orders, minus branch requests waiting, reaches its reorder point (usage × supplier lead time + safety stock).</p>
+      </div>
+      <div class="toolbar" style="padding: 0 16px 12px;">
+        <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;"><input type="checkbox" id="supNeedOnly" checked> Show items needing attention only</label>
+        <span style="flex:1"></span>
+        <button type="button" class="btn primary" id="supCheck">Check now &amp; raise orders</button>
+      </div>
+      <div class="tscroll" style="max-height:420px;overflow:auto;">
+        <table>
+          <thead><tr><th>Item</th><th class="num">Central</th><th class="num">On order</th><th class="num">Branch requests</th><th class="num">Safety</th><th class="num">Reorder pt</th><th class="num">Lead</th><th class="num">To order</th><th>Status</th></tr></thead>
+          <tbody id="supBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel-h" style="padding:4px 0 0;">
+      <h2>Supplier purchase orders</h2>
+      <label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;"><input type="checkbox" id="supShowAll"> Include received and cancelled</label>
+    </div>
+    <div id="poList" class="queue"></div>
+    <div id="poEmpty" class="empty panel" hidden><strong>No open supplier orders</strong>Orders are raised automatically when the central store reaches a reorder point.</div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section id="view-stock" data-view="stock" hidden>
+    <div class="strip" id="stockStrip"></div>
+    <div class="panel">
+      <div class="panel-h"><h2>Inventory balance &amp; costing</h2><p>Quantities by location, valued at unit cost (S$, excl. GST).</p></div>
+      <div class="toolbar" style="padding: 0 16px 12px;">
+        <input type="search" id="invSearch" placeholder="Search item or SKU" aria-label="Search inventory">
+        <select id="invFilter" aria-label="Category"><option value="">All categories</option></select>
+      </div>
+      <div class="tscroll">
+        <table>
+          <thead id="invHead"></thead>
+          <tbody id="invBody"></tbody>
+          <tfoot id="invFoot"></tfoot>
+        </table>
+        <div id="invEmpty" class="empty" hidden><strong>No stock list yet</strong>The inventory list will appear here once it has been loaded.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const money = (v) => 'S$' + Number(v || 0).toLocaleString('en-SG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const money0 = (v) => 'S$' + Math.round(Number(v || 0)).toLocaleString('en-SG');
+  const n0 = (v) => Number(v || 0).toLocaleString('en-SG');
+  const dt = (iso) => { try { return new Date(iso).toLocaleString('en-SG', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}); } catch (e) { return ''; } };
+  const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) { if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v); } for (const c of kids) if (c != null) e.append(c); return e; };
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+  const AUTO_LIMIT = 500, OPS_LIMIT = 5000; // approval bands from the blueprint (S$)
+  const S = { db: null, user: null, me: null, isOwner: false, canEdit: false, writeOk: null,
+    stock: [], sites: [], roles: {gm: []}, orders: [], decisions: {}, suppliers: [], pos: [], cart: {}, reasons: {}, lowPick: {}, lowQty: {}, extraWhy: {}, sel: new Set(), pendList: [], tab: 'order', asGm: true, names: {} };
+
+  // ---------- role ----------
+  const isGm = () => S.isOwner || (S.me && (S.roles.gm || []).includes(S.me));
+  const gmView = () => isGm() && S.asGm;
+  const mySite = () => $('siteSel').value || '';
+  const siteName = (id) => (S.sites.find((s) => s.id === id) || {}).name || id;
+
+  function showMsg(text, kind) { const m = $('msg'); m.textContent = text; m.className = 'notice' + (kind ? ' ' + kind : ''); m.hidden = !text; }
+
+  // ---------- tabs ----------
+  function setTab(t) {
+    S.tab = t;
+    document.querySelectorAll('nav.tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    document.querySelectorAll('[data-view]').forEach((v) => { v.hidden = v.dataset.view !== t; });
+    try { if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t); } catch (e) {}
+    render();
+  }
+  document.querySelectorAll('nav.tabs button').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+  // ---------- derived ----------
+  const statusOf = (o) => (S.decisions[o.id] && S.decisions[o.id].status) || 'pending';
+  const LOW_DAYS = 7, TOPUP_DAYS = 14; // flag below 7 days of branch usage; top up to 14
+  const lowAt = (it, site) => { const per = Number(it.daily || 0) * (Number(it.share && it.share[site]) || 0) * LOW_DAYS; return per > 0 && Number((it.sites || {})[site] || 0) < per; };
+  const needAt = (it, site) => Math.ceil(Number(it.daily || 0) * (Number(it.share && it.share[site]) || 0) * TOPUP_DAYS);
+  const haveAt = (it, site) => Number((it.sites || {})[site] || 0);
+  const recFor = (it, site) => Math.max(0, needAt(it, site) - haveAt(it, site));
+  const pendingFor = (site, sku) => S.orders.find((o) => o.site === site && statusOf(o) === 'pending' && o.lines.some((l, i) => l.sku === sku && !lineDec(o, i)));
+  function lowList(site) {
+    return S.stock.filter((it) => lowAt(it, site)).map((it) => {
+      const need = needAt(it, site), have = haveAt(it, site), perDay = Number(it.daily || 0) * (Number(it.share && it.share[site]) || 0);
+      const sug = Math.max(1, Math.ceil(need - have));
+      return {it, need, have, sug, days: perDay ? have / perDay : null, pend: pendingFor(site, it.sku),
+        reason: 'Low stock: ' + have + ' on hand, ' + (perDay ? (have / perDay).toFixed(1) : '0') + ' days left; topped up to 14 days'};
+    }).sort((a, b) => (a.days ?? 99) - (b.days ?? 99));
+  }
+  const routeFor = (total) => total > OPS_LIMIT ? 'GM approval · above S$5,000, Finance / CEO co-sign noted' : total > AUTO_LIMIT ? 'GM approval' : 'GM approval · small order (≤ S$500)';
+
+  // ---------- render: header ----------
+  function renderHeader() {
+    const chip = $('roleChip');
+    if (!S.db) { chip.textContent = 'Read-only'; chip.className = 'chip'; }
+    else if (gmView()) { chip.textContent = 'General Manager'; chip.className = 'chip gm'; }
+    else { chip.textContent = 'Branch manager'; chip.className = 'chip'; }
+    $('viewAs').hidden = !isGm();
+    $('asGm').setAttribute('aria-pressed', String(S.asGm));
+    $('asBranch').setAttribute('aria-pressed', String(!S.asGm));
+    const pend = S.orders.filter((o) => statusOf(o) === 'pending').length;
+    const pc = $('pendCount'); pc.textContent = pend; pc.hidden = !(pend && gmView());
+    const site = mySite(), lowN = site && !gmView() ? lowList(site).filter((x) => !x.pend).length : 0;
+    const lc = $('lowCount'); lc.textContent = lowN; lc.hidden = !lowN;
+    $('tab-supply').hidden = !gmView();
+    if (!gmView() && S.tab === 'supply') { setTab('low'); return; }
+    const supN = gmView() ? S.pos.filter((p) => p.status === 'awaiting-approval').length + S.stock.filter((it) => { const st = centralPlan(it).status; return st === 'out' || st === 'below-safety'; }).length : 0;
+    const sc = $('supCount'); sc.textContent = supN; sc.hidden = !supN;
+  }
+
+  function fillSiteSelects() {
+    const sel = $('siteSel'), keep = sel.value || store.get('ss-site') || '';
+    sel.replaceChildren(el('option', {value: '', text: 'Choose…'}), ...S.sites.map((s) => el('option', {value: s.id, text: s.id + ' · ' + s.name})));
+    if (S.sites.some((s) => s.id === keep)) sel.value = keep;
+    const hs = $('histSite'), hk = hs.value;
+    hs.replaceChildren(el('option', {value: '', text: 'All branches'}), ...S.sites.map((s) => el('option', {value: s.id, text: s.id + ' · ' + s.name})));
+    hs.value = hk;
+  }
+  function fillCats() {
+    const cats = [...new Set(S.stock.map((i) => i.cat))];
+    for (const id of ['catFilter', 'invFilter']) {
+      const s = $(id), k = s.value;
+      s.replaceChildren(el('option', {value: '', text: 'All categories'}), ...cats.map((c) => el('option', {value: c, text: c})));
+      s.value = k;
+    }
+  }
+  $('siteSel').addEventListener('change', () => { store.set('ss-site', $('siteSel').value); render(); });
+  $('asGm').addEventListener('click', () => { S.asGm = true; render(); });
+  $('asBranch').addEventListener('click', () => { S.asGm = false; render(); });
+
+  // ---------- render: catalogue + slip ----------
+  function renderOrder() {
+    const site = mySite(), q = $('catSearch').value.trim().toLowerCase(), cat = $('catFilter').value, low = $('lowOnly').checked;
+    $('myColHead').textContent = site ? site + ' balance' : 'My branch';
+    $('catEmpty').hidden = S.stock.length > 0;
+    const body = $('catBody'); body.replaceChildren();
+    S.stock.filter((i) => (!cat || i.cat === cat) && (!q || (i.desc + ' ' + i.sku).toLowerCase().includes(q)) && (!low || (site && lowAt(i, site))))
+      .forEach((it) => {
+        const mine = site ? Number((it.sites || {})[site] || 0) : null;
+        const inp = el('input', {type: 'number', min: '0', step: '1', inputmode: 'numeric', id: 'q-' + it.sku, 'aria-label': 'Quantity of ' + it.desc, value: S.cart[it.sku] || ''});
+        const setQ = (v) => { v = Math.max(0, Math.floor(Number(v) || 0)); if (v) S.cart[it.sku] = v; else { delete S.cart[it.sku]; delete S.reasons[it.sku]; } inp.value = v || ''; renderOrder(); };
+        inp.addEventListener('change', () => setQ(inp.value));
+        const minus = el('button', {type: 'button', 'aria-label': 'Decrease', text: '−', onclick: () => setQ((S.cart[it.sku] || 0) - 1)});
+        const plus = el('button', {type: 'button', 'aria-label': 'Increase', text: '+', onclick: () => setQ((S.cart[it.sku] || 0) + 1)});
+        const lowTag = site && lowAt(it, site) ? el('span', {class: 'pill p-warn', text: 'Low'}) : null;
+        const rec = site ? recFor(it, site) : null, inCart = S.cart[it.sku] || 0;
+        const overTag = site && inCart > rec ? el('span', {class: 'over', text: '+' + n0(inCart - rec) + ' above recommended'}) : null;
+        body.append(el('tr', {},
+          el('td', {}, el('span', {text: it.desc}), el('span', {class: 'sub mono', text: it.sku + ' · ' + it.unit + ' · ' + it.cat})),
+          el('td', {class: 'num', text: money(it.cost)}),
+          el('td', {class: 'num' + (Number(it.central) <= 0 ? ' short' : ''), text: n0(it.central)}),
+          el('td', {class: 'num'}, site ? document.createTextNode(n0(mine) + ' ') : document.createTextNode('—'), lowTag),
+          el('td', {class: 'num mono', text: site ? n0(rec) : '—'}),
+          el('td', {}, el('div', {class: 'qty'}, minus, inp, plus), overTag)));
+      });
+    renderSlip();
+  }
+  ['catSearch', 'catFilter', 'lowOnly'].forEach((id) => $(id).addEventListener('input', renderOrder));
+
+  const l_over = (qty, rec) => rec != null && qty > rec;
+  function cartLines() { return Object.entries(S.cart).map(([sku, qty]) => { const it = S.stock.find((i) => i.sku === sku); return it ? {sku, desc: it.desc, unit: it.unit, cost: Number(it.cost), qty, value: Math.round(qty * it.cost * 100) / 100, reason: S.reasons[sku] || '', rec: mySite() ? recFor(it, mySite()) : null, extraWhy: (S.extraWhy[sku] || '').trim().slice(0, 300)} : null; }).filter(Boolean); }
+  function renderSlip() {
+    const site = mySite(), lines = cartLines(), total = lines.reduce((a, l) => a + l.value, 0);
+    $('slipMeta').textContent = site ? 'For ' + site + ' · ' + siteName(site) : 'Choose your branch at the top first.';
+    const ul = $('slipLines'); ul.replaceChildren();
+    lines.forEach((l) => ul.append(el('li', {},
+      el('span', {class: 'd', text: l.desc}), el('span', {class: 'mono', text: money(l.value)}),
+      el('span', {class: 'q', text: l.qty + ' ' + l.unit.toLowerCase() + ' × ' + money(l.cost)}, l.reason ? el('span', {class: 'why', text: l.reason}) : null,
+        l.rec != null && l.qty > l.rec ? el('span', {class: 'over', text: '+' + n0(l.qty - l.rec) + ' above recommended ' + n0(l.rec)}) : null),
+      el('button', {class: 'x', type: 'button', text: 'Remove', onclick: () => { delete S.cart[l.sku]; delete S.reasons[l.sku]; delete S.extraWhy[l.sku]; renderOrder(); }}),
+      l.rec != null && l.qty > l.rec ? (() => { const w = el('input', {type: 'text', class: 'whyin', id: 'w-' + l.sku, placeholder: 'Why do you need more than recommended?', 'aria-label': 'Reason for ordering more ' + l.desc, value: S.extraWhy[l.sku] || ''}); w.addEventListener('input', () => { S.extraWhy[l.sku] = w.value; w.classList.remove('missing'); }); return w; })() : null)));
+    $('slipEmpty').hidden = lines.length > 0;
+    $('slipTotal').textContent = money(total);
+    $('slipRoute').textContent = lines.length ? 'Route: ' + routeFor(total) : '';
+    $('submitOrder').disabled = !(lines.length && site && S.db && S.me && S.writeOk !== false);
+  }
+  $('clearOrder').addEventListener('click', () => { S.cart = {}; S.reasons = {}; S.extraWhy = {}; $('slipNote').value = ''; renderOrder(); });
+
+  $('submitOrder').addEventListener('click', async () => {
+    const site = mySite(), lines = cartLines(); if (!site || !lines.length) return;
+    const missing = lines.filter((l) => l.rec != null && l.qty > l.rec && !l.extraWhy);
+    if (missing.length) {
+      missing.forEach((l) => { const w = $('w-' + l.sku); if (w) w.classList.add('missing'); });
+      const w0 = $('w-' + missing[0].sku); if (w0) w0.focus();
+      const m = $('slipMsg'); m.className = 'notice bad'; m.hidden = false;
+      m.textContent = 'Add a short reason for ' + missing.length + (missing.length === 1 ? ' item' : ' items') + ' ordered above the recommended level. The General Manager will see it.';
+      return;
+    }
+    const btn = $('submitOrder'); btn.disabled = true;
+    const now = new Date(), stamp = now.toISOString();
+    const ref = site + '-' + stamp.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const order = { ref, site, lines: lines.map(({sku, desc, unit, cost, qty, value, reason, rec, extraWhy}) => ({sku, desc, unit, cost, qty, value, reason, rec, extraWhy: l_over(qty, rec) ? extraWhy : ''})),
+      source: lines.some((l) => l.reason) ? 'low-stock' : 'manual',
+      total: Math.round(lines.reduce((a, l) => a + l.value, 0) * 100) / 100, note: $('slipNote').value.trim().slice(0, 500), by: S.me, createdAt: stamp };
+    try {
+      await S.db.collection('orders').doc(ref).set(order);
+      S.cart = {}; S.reasons = {}; S.extraWhy = {}; $('slipNote').value = '';
+      const m = $('slipMsg'); m.className = 'notice ok'; m.textContent = 'Order ' + ref + ' sent to the General Manager (' + money(order.total) + ').'; m.hidden = false;
+      renderOrder();
+    } catch (e) {
+      const m = $('slipMsg'); m.className = 'notice bad'; m.hidden = false;
+      if (e && e.code === 'invalid_argument') { S.writeOk = false; m.textContent = 'Your access to this app is view-only, so you can’t submit orders. Ask the owner to share it with you as an editor.'; }
+      else m.textContent = 'The order wasn’t saved. Check your connection and press Submit again.';
+      btn.disabled = false;
+    }
+  });
+
+  // ---------- render: approvals ----------
+  // GM check: compare each requested line with the recommended restocking level (top up to 14 days of branch usage)
+  function assessLine(l, o) {
+    const it = S.stock.find((i) => i.sku === l.sku);
+    if (!it) return {level: 'bad', rec: null, text: 'Item is not in the stock list. Check the request.'};
+    const perDay = Number(it.daily || 0) * (Number(it.share && it.share[o.site]) || 0);
+    if (!perDay) return {level: 'bad', rec: 0, text: 'This branch has no recorded usage of this item. Ask why it is needed.'};
+    const have = haveAt(it, o.site), target = Math.ceil(perDay * TOPUP_DAYS), rec = Math.max(0, target - have);
+    const after = (have + l.qty) / perDay, daysNow = have / perDay, extra = Math.max(0, l.qty - rec);
+    const dup = S.orders.find((x) => x.id !== o.id && x.site === o.site && statusOf(x) === 'pending' && x.lines.some((y) => y.sku === l.sku));
+    let r;
+    if (rec === 0) r = {level: 'bad', text: 'Not needed now: the branch already holds ' + n0(have) + ' (' + daysNow.toFixed(1) + ' days). Recommended 0.'};
+    else if (l.qty > rec * 1.5 && extra >= 2) r = {level: 'bad', text: 'Over the recommended level: asked ' + n0(l.qty) + ' vs ' + n0(rec) + ' recommended (+' + n0(extra) + ', ' + money(extra * l.cost) + ' extra). Branch would hold ' + after.toFixed(0) + ' days.'};
+    else if (l.qty > rec) r = {level: 'warn', text: 'Slightly above recommended ' + n0(rec) + ' (+' + n0(extra) + '). Branch would hold ' + after.toFixed(0) + ' days.'};
+    else if (after < LOW_DAYS) r = {level: 'warn', text: 'Below recommended ' + n0(rec) + '. Branch would still have only ' + after.toFixed(1) + ' days after delivery.'};
+    else if (l.qty < rec) r = {level: 'ok', text: 'Below recommended ' + n0(rec) + ' but covers ' + after.toFixed(0) + ' days after delivery.'};
+    else r = {level: 'ok', text: 'In line with recommended ' + n0(rec) + '. Covers ' + after.toFixed(0) + ' days after delivery.'};
+    if (dup) { r.text += ' Also requested in ' + dup.ref + '.'; if (r.level === 'ok') r.level = 'warn'; }
+    if (l.extraWhy) r.text += ' Branch\u2019s reason: \u201c' + l.extraWhy + '\u201d';
+    else if (l.qty > rec && r.level !== 'ok') r.text += ' No reason given by the branch.';
+    return Object.assign(r, {rec, extra, extraValue: extra * l.cost});
+  }
+  function assessOrder(o) {
+    const checks = o.lines.map((l) => ({l, c: assessLine(l, o)}));
+    const bad = checks.filter((x) => x.c.level === 'bad'), warn = checks.filter((x) => x.c.level === 'warn');
+    const extraVal = checks.reduce((a, x) => a + (x.c.extraValue || 0), 0);
+    const recVal = checks.reduce((a, x) => a + Math.min(x.l.qty, x.c.rec ?? x.l.qty) * x.l.cost, 0);
+    let level, title, text;
+    if (bad.length) { level = 'bad'; title = 'Flagged: review before approving';
+      text = bad.length + ' of ' + checks.length + ' lines do not match the recommended restocking level. ' + (extraVal > 0 ? money(extraVal) + ' of this order is above what the branch needs for 14 days.' : ''); }
+    else if (warn.length) { level = 'warn'; title = 'Mostly in line, with notes';
+      text = (checks.length - warn.length) + ' of ' + checks.length + ' lines match the recommended level. Check the notes below before approving.'; }
+    else { level = 'ok'; title = 'In line with the recommended restocking level';
+      text = 'Every line tops the branch up to about 14 days of usage. Reasonable to approve.'; }
+    return {checks, bad, warn, level, title, text, extraVal, recVal};
+  }
+
+  // ---------- line-level decisions ----------
+  const keyOf = (o, i) => o.id + '#' + i;
+  const lineDec = (o, i) => { const d = S.decisions[o.id]; if (!d) return null; if (d.lines) return d.lines[i] || null; return d.status && d.status !== 'pending' ? {status: d.status, note: d.note, at: d.at, by: d.by} : null; };
+  const openIdx = (o) => o.lines.map((_, i) => i).filter((i) => !lineDec(o, i));
+  const itOf = (sku) => S.stock.find((i) => i.sku === sku);
+  const decPill = (st) => el('span', {class: 'pill ' + (st === 'approved' ? 'p-ok' : 'p-bad'), text: st === 'approved' ? 'Approved' : 'Rejected'});
+
+  async function renderApprovals() {
+    const gm = gmView();
+    $('gmOnly').hidden = gm;
+    const q = $('queue'); q.replaceChildren();
+    const pend = S.orders.filter((o) => statusOf(o) === 'pending' && (gm || o.site === mySite())).sort((a, b) => a.createdAt < b.createdAt ? -1 : 1);
+    if (gm) { const rank = {bad: 0, warn: 1, ok: 2}; pend.sort((a, b) => rank[assessOrder(a).level] - rank[assessOrder(b).level]); }
+    S.pendList = pend;
+    const valid = new Set(); pend.forEach((o) => openIdx(o).forEach((i) => valid.add(keyOf(o, i))));
+    for (const k of [...S.sel]) if (!valid.has(k)) S.sel.delete(k);
+    $('bulk').hidden = !(gm && pend.length);
+    if (!pend.length) { q.append(el('div', {class: 'empty panel'}, el('strong', {text: 'Nothing waiting'}), document.createTextNode(gm ? 'New branch orders will appear here for your decision.' : 'Your branch has no orders waiting for approval.'))); return; }
+    const ps = await names(pend.map((o) => o.by));
+    pend.forEach((o) => {
+      const A = assessOrder(o), open = openIdx(o);
+      const card = el('article', {class: 'order', id: 'card-' + o.id});
+      const lineBoxes = [];
+      const orderBox = gm && open.length ? el('input', {type: 'checkbox', id: 'selo-' + o.id, 'aria-label': 'Select every open item in ' + o.ref}) : null;
+      const acts = el('div', {class: 'acts'});
+      const cardApprove = el('button', {type: 'button', class: 'btn ok', text: 'Approve selected items'});
+      const cardReject = el('button', {type: 'button', class: 'btn danger', text: 'Reject selected items'});
+      const reason = el('input', {type: 'text', id: 'r-' + o.id, placeholder: 'Reason (needed to reject)', 'aria-label': 'Reason for rejecting items in ' + o.ref});
+      const mineKeys = () => new Set(open.map((i) => keyOf(o, i)).filter((k) => S.sel.has(k)));
+      const syncCard = () => {
+        const n = mineKeys().size;
+        if (orderBox) { orderBox.checked = n > 0 && n === open.length; orderBox.indeterminate = n > 0 && n < open.length; }
+        card.classList.toggle('sel', n > 0);
+        const P = planLines(mineKeys());
+        cardApprove.disabled = !P.ok.length; cardReject.disabled = !n;
+        cardApprove.textContent = n ? 'Approve ' + (P.ok.length < n ? P.ok.length + ' of ' + n : n) + (n === 1 ? ' item' : ' items') : 'Approve selected items';
+        cardReject.textContent = n ? 'Reject ' + n + (n === 1 ? ' item' : ' items') : 'Reject selected items';
+      };
+      if (orderBox) orderBox.addEventListener('change', () => { open.forEach((i) => { if (orderBox.checked) S.sel.add(keyOf(o, i)); else S.sel.delete(keyOf(o, i)); }); lineBoxes.forEach((b) => { b.checked = orderBox.checked; }); syncCard(); updateBulk(); });
+      const rows = o.lines.map((l, idx) => {
+        const c = A.checks[idx].c, dec = lineDec(o, idx);
+        const it = itOf(l.sku), avail = it ? Number(it.central) : 0, short = !dec && l.qty > avail;
+        let first = null;
+        if (gm) {
+          if (dec) first = el('td', {}, el('span', {class: 'sub', text: 'Done'}));
+          else {
+            const b = el('input', {type: 'checkbox', id: 'sel-' + o.id + '-' + idx, 'aria-label': 'Select ' + l.desc + ' in ' + o.ref, checked: S.sel.has(keyOf(o, idx)) ? 'checked' : null});
+            b.addEventListener('change', () => { if (b.checked) S.sel.add(keyOf(o, idx)); else S.sel.delete(keyOf(o, idx)); syncCard(); updateBulk(); });
+            lineBoxes.push(b); first = el('td', {}, b);
+          }
+        }
+        const lastCell = gm
+          ? (dec ? el('td', {}, decPill(dec.status), dec.note ? el('span', {class: 'chk', text: dec.note}) : null)
+                 : el('td', {}, el('span', {class: 'pill ' + (c.level === 'ok' ? 'p-ok' : c.level === 'warn' ? 'p-warn' : 'p-bad'), text: c.level === 'ok' ? 'OK' : c.level === 'warn' ? 'Note' : 'Flag'}), el('span', {class: 'chk ' + c.level, text: c.text})))
+          : el('td', {}, dec ? decPill(dec.status) : el('span', {class: 'pill p-pend', text: 'Waiting for GM'}), dec && dec.note ? el('span', {class: 'chk', text: dec.note}) : null);
+        return el('tr', {class: dec ? 'decided' : ''}, first,
+          el('td', {}, el('span', {text: l.desc}), el('span', {class: 'sub mono', text: l.sku}), l.reason ? el('span', {class: 'why', text: l.reason}) : null),
+          el('td', {class: 'num', text: n0(l.qty) + ' ' + l.unit.toLowerCase()}),
+          el('td', {class: 'num', text: money(l.cost)}),
+          el('td', {class: 'num', text: money(l.value)}),
+          el('td', {class: 'num' + (short ? ' short' : ''), text: dec ? '—' : short ? 'Short ' + n0(l.qty - avail) : n0(avail) + ' → ' + n0(avail - l.qty)}),
+          lastCell);
+      });
+      const openA = A.checks.filter((x, i) => !lineDec(o, i));
+      const bad = openA.filter((x) => x.c.level === 'bad'), warn = openA.filter((x) => x.c.level === 'warn');
+      const lvl = bad.length ? 'bad' : warn.length ? 'warn' : 'ok';
+      const review = el('div', {class: 'review ' + lvl, role: lvl === 'bad' ? 'alert' : null},
+        el('h4', {text: lvl === 'bad' ? 'Flagged: review before approving' : lvl === 'warn' ? 'Mostly in line, with notes' : 'In line with the recommended restocking level'}),
+        el('p', {text: lvl === 'bad' ? bad.length + ' of ' + openA.length + ' open items do not match the recommended level. Tick only the items you agree with.' : lvl === 'warn' ? 'Check the notes before approving.' : 'Every open item tops the branch up to about 14 days of usage. Reasonable to approve.'}),
+        bad.length || warn.length ? el('ul', {}, ...bad.concat(warn).map((x) => el('li', {text: x.l.desc + ': ' + x.c.text}))) : null,
+        el('p', {text: 'Recommended value for this order: ' + money(A.recVal) + ' vs requested ' + money(o.total) + '.'}));
+      if (gm) {
+        cardApprove.addEventListener('click', () => { const P = planLines(mineKeys()); if (!P.ok.length) return; askApprove(acts, P); });
+        cardReject.addEventListener('click', () => { const keys = mineKeys(); if (!keys.size) return; if (!reason.value.trim()) { reason.focus(); reason.placeholder = 'Type a reason first'; return; } askReject(acts, keys, reason.value.trim()); });
+        acts.append(reason, cardReject, cardApprove);
+      } else acts.append(el('span', {class: 'pill p-pend', text: 'Waiting for GM'}));
+      const decidedN = o.lines.length - open.length;
+      q.append(card); card.append(
+        el('div', {class: 'order-h'}, el('span', {class: 'pick'}, el('h3', {class: 'mono', text: o.ref}, o.source === 'low-stock' ? el('span', {class: 'pill tag-low', style: 'margin-left:8px;font-family:var(--font-body)', text: 'Low-stock request'}) : null)),
+          el('span', {class: 'meta', text: o.site + ' · ' + siteName(o.site) + ' · ' + (ps[o.by] ? (ps[o.by].name || 'A branch manager') : 'A branch manager') + ' · ' + dt(o.createdAt) + (decidedN ? ' · ' + decidedN + ' of ' + o.lines.length + ' items decided' : '')}),
+          el('span', {style: 'display:flex;gap:6px;flex-wrap:wrap'}, gm ? el('span', {class: 'pill ' + (lvl === 'ok' ? 'p-ok' : lvl === 'warn' ? 'p-warn' : 'p-bad'), text: lvl === 'ok' ? 'In line' : lvl === 'warn' ? 'Notes' : 'Flagged'}) : null,
+            el('span', {class: 'pill ' + (o.total > OPS_LIMIT ? 'p-bad' : o.total > AUTO_LIMIT ? 'p-warn' : 'p-pend'), text: money(o.total)}))),
+        el('div', {class: 'tscroll'}, el('table', {}, el('thead', {}, el('tr', {}, gm ? el('th', {}, orderBox) : null, el('th', {text: 'Item'}), el('th', {class: 'num', text: 'Qty'}), el('th', {class: 'num', text: 'Unit cost'}), el('th', {class: 'num', text: 'Value'}), el('th', {class: 'num', text: 'Central stock after'}), el('th', {text: gm ? 'GM check' : 'Status'}))), el('tbody', {}, ...rows))),
+        gm ? review : null,
+        el('div', {class: 'order-f'}, el('div', {class: 'note', text: o.note ? 'Note: ' + o.note : routeFor(o.total)}), acts));
+      if (gm) syncCard();
+    });
+    updateBulk();
+  }
+
+  // Walk the chosen items in queue order with a running central balance, so approval never over-issues.
+  function planLines(keys) {
+    const bal = {}, ok = [], short = [], flagged = [];
+    S.pendList.forEach((o) => { const A = assessOrder(o); o.lines.forEach((l, i) => {
+      if (!keys.has(keyOf(o, i))) return;
+      if (A.checks[i].c.level === 'bad') flagged.push(keyOf(o, i));
+      const it = itOf(l.sku), c = l.sku in bal ? bal[l.sku] : Number(it ? it.central : 0);
+      if (it && c >= l.qty) { bal[l.sku] = c - l.qty; ok.push({o, i}); } else short.push({o, i});
+    }); });
+    return {ok, short, flagged, n: ok.length + short.length};
+  }
+  function confirmIn(box, question, yesText, fn) {
+    const prev = [...box.childNodes];
+    const yes = el('button', {type: 'button', class: 'btn primary', text: yesText});
+    const no = el('button', {type: 'button', class: 'btn', text: 'Cancel', onclick: () => { box.replaceChildren(...prev); updateBulk(); }});
+    yes.addEventListener('click', async () => { yes.disabled = true; no.disabled = true; yes.textContent = 'Working…'; await fn(); box.replaceChildren(...prev); render(); });
+    box.replaceChildren(el('span', {text: question}), no, yes);
+  }
+  function askApprove(box, P) {
+    const val = P.ok.reduce((a, x) => a + Number(x.o.lines[x.i].value), 0);
+    const orders = new Set(P.ok.map((x) => x.o.id)).size;
+    const fl = P.ok.filter((x) => P.flagged.includes(keyOf(x.o, x.i))).length;
+    let q = 'Approve ' + P.ok.length + (P.ok.length === 1 ? ' item' : ' items') + (orders > 1 ? ' across ' + orders + ' orders' : '') + ' and issue ' + money(val) + ' of stock?';
+    if (fl) q += ' ' + fl + ' flagged.';
+    if (P.short.length) q += ' ' + P.short.length + ' stay pending (central store short).';
+    confirmIn(box, q, fl ? 'Approve anyway' : 'Yes, approve', async () => {
+      const groups = new Map(); P.ok.forEach((x) => { if (!groups.has(x.o.id)) groups.set(x.o.id, {o: x.o, idx: []}); groups.get(x.o.id).idx.push(x.i); });
+      const ledger = {central: {}, sites: {}}; let done = 0, failed = 0;
+      for (const g of groups.values()) {
+        const flaggedHere = g.idx.some((i) => P.flagged.includes(keyOf(g.o, i)));
+        if (await decideLines(g.o, g.idx, 'approved', flaggedHere ? 'Approved despite flag' : '', ledger)) { done += g.idx.length; g.idx.forEach((i) => S.sel.delete(keyOf(g.o, i))); } else failed += g.idx.length;
+      }
+      const raised = done ? await autoReplenish('after branch issue') : 0;
+      showMsg(done + (done === 1 ? ' item' : ' items') + ' approved and stock issued.' + (failed ? ' ' + failed + ' could not be saved; they are still pending.' : '') + (P.short.length ? ' ' + P.short.length + ' left pending: central store is short.' : '') + (raised ? ' Central store reached its reorder point, so ' + raised + (raised === 1 ? ' supplier order was' : ' supplier orders were') + ' raised (see Supplier orders).' : ''), failed ? 'bad' : 'ok');
+    });
+  }
+  function askReject(box, keys, reason) {
+    const items = []; S.pendList.forEach((o) => o.lines.forEach((l, i) => { if (keys.has(keyOf(o, i))) items.push({o, i}); }));
+    confirmIn(box, 'Reject ' + items.length + (items.length === 1 ? ' item' : ' items') + '?', 'Yes, reject', async () => {
+      const groups = new Map(); items.forEach((x) => { if (!groups.has(x.o.id)) groups.set(x.o.id, {o: x.o, idx: []}); groups.get(x.o.id).idx.push(x.i); });
+      let done = 0, failed = 0;
+      for (const g of groups.values()) { if (await decideLines(g.o, g.idx, 'rejected', reason, null)) { done += g.idx.length; g.idx.forEach((i) => S.sel.delete(keyOf(g.o, i))); } else failed += g.idx.length; }
+      showMsg(done + (done === 1 ? ' item' : ' items') + ' rejected.' + (failed ? ' ' + failed + ' could not be saved.' : ''), failed ? 'bad' : 'ok');
+    });
+  }
+  function updateBulk() {
+    if ($('bulk').hidden) return;
+    const all = new Set(); S.pendList.forEach((o) => openIdx(o).forEach((i) => all.add(keyOf(o, i))));
+    const P = planLines(S.sel), n = S.sel.size;
+    $('selAll').checked = n > 0 && n === all.size; $('selAll').indeterminate = n > 0 && n < all.size;
+    $('selAllLabel').textContent = 'Select all items (' + all.size + ')';
+    const info = $('selInfo'); info.replaceChildren();
+    if (!n) info.textContent = 'Tick individual items, or a whole order, to approve or reject them together.';
+    else {
+      const val = P.ok.concat(P.short).reduce((a, x) => a + Number(x.o.lines[x.i].value), 0);
+      const orders = new Set(P.ok.concat(P.short).map((x) => x.o.id)).size;
+      info.append(el('b', {text: n + (n === 1 ? ' item' : ' items') + ' in ' + orders + (orders === 1 ? ' order' : ' orders') + ' · ' + money(val)}));
+      if (P.flagged.length) info.append(document.createTextNode(' · '), el('span', {class: 'short', text: P.flagged.length + ' flagged'}));
+      if (P.short.length) info.append(document.createTextNode(' · '), el('span', {class: 'short', text: P.short.length + ' can’t be issued (central store short)'}));
+    }
+    if (!$('bulkApprove')) return; // a bulk confirmation is showing
+    $('bulkApprove').disabled = !P.ok.length; $('bulkReject').disabled = !n;
+    $('bulkApprove').textContent = P.ok.length && P.ok.length < n ? 'Approve ' + P.ok.length + ' of ' + n + ' items' : 'Approve selected';
+  }
+  $('selAll').addEventListener('change', () => { if ($('selAll').checked) S.pendList.forEach((o) => openIdx(o).forEach((i) => S.sel.add(keyOf(o, i)))); else S.sel.clear(); render(); });
+  $('selOk').addEventListener('click', () => { S.sel.clear(); S.pendList.forEach((o) => { const A = assessOrder(o); openIdx(o).forEach((i) => { if (A.checks[i].c.level === 'ok') S.sel.add(keyOf(o, i)); }); }); render(); });
+  $('bulkApprove').addEventListener('click', () => { const P = planLines(S.sel); if (P.ok.length) askApprove($('bulkActs'), P); });
+  $('bulkReject').addEventListener('click', () => {
+    const reason = $('bulkReason').value.trim(); if (!S.sel.size) return;
+    if (!reason) { $('bulkReason').focus(); $('bulkReason').placeholder = 'Type a reason first'; return; }
+    askReject($('bulkActs'), new Set(S.sel), reason); $('bulkReason').value = '';
+  });
+
+  // Record decisions for some lines of one order; issue stock for approved lines.
+  // ledger carries running balances across several orders, since live updates may not arrive in between.
+  async function decideLines(o, idxs, status, note, ledger) {
+    const L = ledger || {central: {}, sites: {}};
+    const cen = (sku) => sku in L.central ? L.central[sku] : Number((itOf(sku) || {}).central || 0);
+    try {
+      if (status === 'approved') {
+        const need = {}; idxs.forEach((i) => { const l = o.lines[i]; need[l.sku] = (need[l.sku] || 0) + l.qty; });
+        for (const sku of Object.keys(need)) if (!itOf(sku) || cen(sku) < need[sku]) return false;
+      }
+      const prev = S.decisions[o.id], at = new Date().toISOString();
+      const lines = {}; o.lines.forEach((_, i) => { const d = lineDec(o, i); if (d) lines[i] = d; });
+      idxs.forEach((i) => { lines[i] = {status, note: (note || '').slice(0, 300), at, by: S.me}; });
+      const allDone = o.lines.every((_, i) => lines[i]);
+      const apprIdx = o.lines.map((_, i) => i).filter((i) => lines[i] && lines[i].status === 'approved');
+      const overall = !allDone ? 'pending' : apprIdx.length === o.lines.length ? 'approved' : apprIdx.length === 0 ? 'rejected' : 'partial';
+      const body = {status: overall, lines, by: S.me, at, note: (note || '').slice(0, 300), site: o.site,
+        total: Math.round(apprIdx.reduce((a, i) => a + Number(o.lines[i].value), 0) * 100) / 100};
+      await S.db.collection('decisions').doc(o.id).set(body);
+      S.decisions[o.id] = body;
+      if (status === 'approved') {
+        for (const i of idxs) {
+          const l = o.lines[i], it = itOf(l.sku);
+          const sites = Object.assign({}, L.sites[l.sku] || it.sites); sites[o.site] = Number(sites[o.site] || 0) + l.qty;
+          const c = cen(l.sku) - l.qty;
+          await S.db.collection('stock').doc(l.sku).update({central: c, sites});
+          L.central[l.sku] = c; L.sites[l.sku] = sites;
+        }
+      }
+      return true;
+    } catch (e) {
+      if (e && e.code === 'invalid_argument') showMsg('Only the General Manager (an editor of this app) can approve orders.', 'bad');
+      return false;
+    }
+  }
+
+  // ---------- central store replenishment from suppliers ----------
+  // Policy: safety stock = 7 days of total usage; reorder point = usage x supplier lead time + safety stock;
+  // order up to reorder point + 14 days, rounded up to the supplier's MOQ. Position counts stock already on order
+  // and branch items still waiting for approval, so the central store never dips into safety stock.
+  const SAFETY_DAYS = 7, REVIEW_DAYS = 14;
+  const supOf = (id) => S.suppliers.find((s) => s.id === id) || null;
+  const openPO = (p) => !['received', 'cancelled'].includes(p.status);
+  const onOrder = (sku) => S.pos.filter(openPO).reduce((a, p) => a + p.lines.reduce((b, l) => b + (l.sku === sku ? Number(l.qty) : 0), 0), 0);
+  const branchDemand = (sku) => S.orders.filter((o) => statusOf(o) === 'pending').reduce((a, o) => a + o.lines.reduce((b, l, i) => b + (l.sku === sku && !lineDec(o, i) ? Number(l.qty) : 0), 0), 0);
+  function centralPlan(it) {
+    const sp = supOf(it.sup), lead = sp ? Number(sp.lead) : 7, d = Number(it.daily || 0);
+    const ss = Math.ceil(d * SAFETY_DAYS), rop = Math.ceil(d * lead + ss), max = Math.ceil(rop + d * REVIEW_DAYS);
+    const c = Number(it.central || 0), oo = onOrder(it.sku), dem = branchDemand(it.sku), pos = c + oo - dem;
+    const moq = Math.max(1, Number(it.moq || 1));
+    const need = d > 0 && pos <= rop ? Math.max(moq, Math.ceil((max - pos) / moq) * moq) : 0;
+    const status = c <= 0 ? 'out' : c - dem < ss ? 'below-safety' : need ? 'reorder' : oo ? 'on-order' : 'ok';
+    return {sp, lead, ss, rop, max, c, oo, dem, pos, need, moq, status};
+  }
+  let replenishing = false;
+  async function autoReplenish(trigger) {
+    if (replenishing || !S.db || !isGm()) return 0;
+    replenishing = true;
+    try {
+      const bySup = new Map();
+      S.stock.forEach((it) => { const p = centralPlan(it); if (!p.need) return; const k = it.sup || 'UNKNOWN';
+        if (!bySup.has(k)) bySup.set(k, []); bySup.get(k).push({sku: it.sku, desc: it.desc, unit: it.unit, cost: Number(it.cost), qty: p.need, value: Math.round(p.need * it.cost * 100) / 100,
+          why: 'Position ' + n0(p.pos) + ' at or below reorder point ' + n0(p.rop) + ' (safety ' + n0(p.ss) + ')'}); });
+      let made = 0; const now = new Date(), stamp = now.toISOString();
+      for (const [sid, lines] of bySup) {
+        const sp = supOf(sid), total = Math.round(lines.reduce((a, l) => a + l.value, 0) * 100) / 100;
+        const auto = sp && sp.approved && total <= AUTO_LIMIT;
+        const ref = 'PO-' + stamp.slice(2, 10).replace(/-/g, '') + '-' + sid.replace('SUP-', 'S') + '-' + Math.random().toString(36).slice(2, 5).toUpperCase();
+        const eta = new Date(now.getTime() + (sp ? Number(sp.lead) : 7) * 864e5).toISOString().slice(0, 10);
+        await S.db.collection('purchase').doc(ref).set({ref, supplierId: sid, supplier: sp ? sp.name : sid, lines, total, eta, trigger,
+          status: auto ? 'approved' : 'awaiting-approval', approval: auto ? 'auto (≤ S$500)' : '', createdAt: stamp, createdBy: 'auto'});
+        made++;
+      }
+      return made;
+    } catch (e) { showMsg('Supplier orders could not be raised. Check your connection and press Check now.', 'bad'); return 0; }
+    finally { replenishing = false; }
+  }
+
+  function renderSupply() {
+    const plans = S.stock.map((it) => ({it, p: centralPlan(it)}));
+    const below = plans.filter((x) => x.p.status === 'below-safety' || x.p.status === 'out');
+    const reord = plans.filter((x) => x.p.need > 0);
+    const open = S.pos.filter(openPO), awaiting = S.pos.filter((p) => p.status === 'awaiting-approval');
+    $('supStrip').replaceChildren(
+      stat('Below safety stock', n0(below.length), below.length ? 'Central store at risk of shortage' : 'Every item above safety stock', below.length > 0),
+      stat('Need ordering', n0(reord.length), reord.length ? 'Press Check now to raise orders' : 'All covered by stock or open orders', reord.length > 0),
+      stat('Open supplier orders', n0(open.length), money0(open.reduce((a, p) => a + Number(p.total), 0)) + ' on order'),
+      stat('Waiting for your approval', n0(awaiting.length), money0(awaiting.reduce((a, p) => a + Number(p.total), 0)), awaiting.length > 0));
+    $('supCheck').disabled = !reord.length;
+    const only = $('supNeedOnly').checked;
+    const rank = {out: 0, 'below-safety': 1, reorder: 2, 'on-order': 3, ok: 4};
+    const label = {out: ['Out of stock', 'p-bad'], 'below-safety': ['Below safety', 'p-bad'], reorder: ['Needs ordering', 'p-warn'], 'on-order': ['On order', 'p-pend'], ok: ['Covered', 'p-ok']};
+    $('supBody').replaceChildren(...plans.filter((x) => !only || x.p.status !== 'ok').sort((a, b) => rank[a.p.status] - rank[b.p.status])
+      .map(({it, p}) => el('tr', {},
+        el('td', {}, el('span', {text: it.desc}), el('span', {class: 'sub mono', text: it.sku + ' · ' + (p.sp ? p.sp.name : it.sup)})),
+        el('td', {class: 'num mono' + (p.c < p.ss ? ' short' : ''), text: n0(p.c)}),
+        el('td', {class: 'num mono', text: p.oo ? n0(p.oo) : '—'}),
+        el('td', {class: 'num mono', text: p.dem ? n0(p.dem) : '—'}),
+        el('td', {class: 'num mono', text: n0(p.ss)}),
+        el('td', {class: 'num mono', text: n0(p.rop)}),
+        el('td', {class: 'num mono', text: n0(p.lead) + 'd'}),
+        el('td', {class: 'num mono', text: p.need ? n0(p.need) : '—'}),
+        el('td', {}, el('span', {class: 'pill ' + label[p.status][1], text: label[p.status][0]})))));
+    const list = $('poList'); list.replaceChildren();
+    const shown = S.pos.filter((p) => $('supShowAll').checked || openPO(p)).sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
+    $('poEmpty').hidden = shown.length > 0;
+    const stLabel = {'awaiting-approval': ['Waiting for approval', 'p-warn'], approved: ['Approved · ready to send', 'p-ok'], sent: ['Sent · awaiting delivery', 'p-pend'], received: ['Received', 'p-ok'], cancelled: ['Cancelled', 'p-bad']};
+    shown.forEach((p) => {
+      const sp = supOf(p.supplierId), acts = el('div', {class: 'acts'});
+      const upd = async (patch, msg) => { try { await S.db.collection('purchase').doc(p.id).update(patch); showMsg(msg, 'ok'); } catch (e) { showMsg('That change wasn’t saved. Try again.', 'bad'); render(); } };
+      if (p.status === 'awaiting-approval') acts.append(
+        el('button', {type: 'button', class: 'btn danger', text: 'Cancel', onclick: () => confirmIn(acts, 'Cancel ' + p.ref + '?', 'Yes, cancel', () => upd({status: 'cancelled', decidedBy: S.me, decidedAt: new Date().toISOString()}, p.ref + ' cancelled.'))}),
+        el('button', {type: 'button', class: 'btn ok', text: 'Approve order', onclick: () => confirmIn(acts, 'Approve ' + money(p.total) + ' with ' + p.supplier + '?', 'Yes, approve', () => upd({status: 'approved', approval: 'GM', decidedBy: S.me, decidedAt: new Date().toISOString()}, p.ref + ' approved. Send it to the supplier next.'))}));
+      if (p.status === 'approved') acts.append(
+        el('button', {type: 'button', class: 'btn', text: 'Copy order text', onclick: async (ev) => { const t = poText(p, sp); try { await navigator.clipboard.writeText(t); ev.target.textContent = 'Copied'; } catch (e) { ev.target.textContent = 'Copy failed'; } }}),
+        el('button', {type: 'button', class: 'btn primary', text: 'Mark as sent', onclick: () => upd({status: 'sent', sentAt: new Date().toISOString(), sentBy: S.me}, p.ref + ' marked as sent to ' + p.supplier + '.')}));
+      if (p.status === 'sent' || p.status === 'approved') acts.append(
+        el('button', {type: 'button', class: 'btn ok', text: 'Receive delivery', onclick: () => confirmIn(acts, 'Add ' + p.lines.length + ' items to the central store?', 'Yes, received', () => receivePO(p))}));
+      list.append(el('article', {class: 'order'},
+        el('div', {class: 'order-h'}, el('h3', {class: 'mono', text: p.ref}),
+          el('span', {class: 'meta', text: p.supplier + (sp ? ' · ' + sp.contact + ' · ' + sp.phone + ' · ' + sp.email : '') + ' · raised ' + dt(p.createdAt) + (p.createdBy === 'auto' ? ' automatically' : '') + ' · ETA ' + p.eta}),
+          el('span', {style: 'display:flex;gap:6px;flex-wrap:wrap'}, el('span', {class: 'pill ' + stLabel[p.status][1], text: stLabel[p.status][0]}), el('span', {class: 'pill p-pend', text: money(p.total)}))),
+        el('div', {class: 'tscroll'}, el('table', {}, el('thead', {}, el('tr', {}, el('th', {text: 'Item'}), el('th', {class: 'num', text: 'Qty'}), el('th', {class: 'num', text: 'Unit cost'}), el('th', {class: 'num', text: 'Value'}), el('th', {text: 'Why'}))),
+          el('tbody', {}, ...p.lines.map((l) => el('tr', {}, el('td', {}, el('span', {text: l.desc}), el('span', {class: 'sub mono', text: l.sku})), el('td', {class: 'num mono', text: n0(l.qty) + ' ' + String(l.unit).toLowerCase()}),
+            el('td', {class: 'num mono', text: money(l.cost)}), el('td', {class: 'num mono', text: money(l.value)}), el('td', {}, el('span', {class: 'chk', text: l.why || ''}))))))),
+        el('div', {class: 'order-f'}, el('div', {class: 'note', text: p.approval ? 'Approval: ' + p.approval : (p.status === 'awaiting-approval' ? 'Above S$500, so it needs your approval before it goes to the supplier.' : '')}), acts)));
+    });
+  }
+  function poText(p, sp) {
+    return 'Purchase order ' + p.ref + '\nTo: ' + p.supplier + (sp ? ' (' + sp.contact + ', ' + sp.email + ')' : '') + '\nRequired by: ' + p.eta + '\n\n' +
+      p.lines.map((l) => '- ' + l.desc + ' (' + l.sku + '): ' + l.qty + ' ' + String(l.unit).toLowerCase() + ' @ S$' + Number(l.cost).toFixed(2) + ' = S$' + Number(l.value).toFixed(2)).join('\n') +
+      '\n\nTotal: S$' + Number(p.total).toFixed(2) + ' (excl. GST)\nDeliver to: Central Store (Tuas)';
+  }
+  async function receivePO(p) {
+    try {
+      for (const l of p.lines) { const it = itOf(l.sku); if (!it) continue; await S.db.collection('stock').doc(l.sku).update({central: Number(it.central) + Number(l.qty)}); }
+      await S.db.collection('purchase').doc(p.id).update({status: 'received', receivedAt: new Date().toISOString(), receivedBy: S.me});
+      showMsg(p.ref + ' received. Central store balances updated.', 'ok');
+    } catch (e) { showMsg('The delivery wasn’t recorded. Try again.', 'bad'); render(); }
+  }
+  $('supNeedOnly').addEventListener('change', () => render());
+  $('supShowAll').addEventListener('change', () => render());
+  $('supCheck').addEventListener('click', async () => {
+    $('supCheck').disabled = true;
+    const n = await autoReplenish('GM check');
+    showMsg(n ? n + (n === 1 ? ' supplier order raised.' : ' supplier orders raised.') + ' Orders up to S$500 are approved automatically; larger ones wait for you below.' : 'Nothing to order. Every item is covered.', 'ok');
+  });
+
+  // ---------- render: history ----------
+  async function renderHistory() {
+    const fs = $('histSite').value, fst = $('histStatus').value;
+    const month = new Date().toISOString().slice(0, 7);
+    const strip = $('spendStrip'); strip.replaceChildren();
+    const issuedVal = (o) => o.lines.reduce((a, l, i) => { const d = lineDec(o, i); return a + (d && d.status === 'approved' && (d.at || '').slice(0, 7) === month ? Number(l.value) : 0); }, 0);
+    const openVal = (o) => o.lines.reduce((a, l, i) => a + (lineDec(o, i) ? 0 : Number(l.value)), 0);
+    const issuedOrders = S.orders.filter((o) => issuedVal(o) > 0);
+    const waiting = S.orders.filter((o) => statusOf(o) === 'pending');
+    strip.append(stat('Issued this month', money0(issuedOrders.reduce((a, o) => a + issuedVal(o), 0)), issuedOrders.length + ' orders, approved items only'),
+      stat('Waiting for approval', money0(waiting.reduce((a, o) => a + openVal(o), 0)), waiting.length + ' orders'));
+    S.sites.forEach((s) => { const v = issuedOrders.filter((o) => o.site === s.id).reduce((a, o) => a + issuedVal(o), 0); strip.append(stat(s.id + ' spend this month', money0(v), s.name)); });
+
+    const list = S.orders.filter((o) => (!fs || o.site === fs) && (!fst || statusOf(o) === fst)).sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
+    $('histEmpty').hidden = list.length > 0;
+    const ps = await names(list.map((o) => o.by).concat(list.map((o) => (S.decisions[o.id] || {}).by).filter(Boolean)));
+    const body = $('histBody'); body.replaceChildren();
+    list.forEach((o) => {
+      const st = statusOf(o), d = S.decisions[o.id];
+      const decidedAny = o.lines.some((_, i) => lineDec(o, i));
+      const stLabel = {approved: 'Approved', rejected: 'Rejected', partial: 'Partly approved', pending: decidedAny ? 'Partly decided' : 'Pending'}[st] || st;
+      const cancel = (st === 'pending' && !decidedAny && o.by === S.me) ? el('button', {type: 'button', class: 'btn', text: 'Withdraw', onclick: async (ev) => { ev.target.disabled = true; try { await S.db.collection('orders').doc(o.id).delete(); showMsg(o.ref + ' withdrawn.', 'ok'); } catch (e) { showMsg('Could not withdraw ' + o.ref + '.', 'bad'); ev.target.disabled = false; } }}) : null;
+      body.append(el('tr', {class: o.site === mySite() ? 'mine' : ''},
+        el('td', {}, el('span', {class: 'mono', text: o.ref}), el('span', {class: 'sub', text: dt(o.createdAt) + (o.source === 'low-stock' ? ' · Low-stock request' : '')})),
+        el('td', {text: o.site + ' · ' + siteName(o.site)}),
+        el('td', {text: (ps[o.by] && ps[o.by].name) || 'A branch manager'}),
+        el('td', {text: o.lines.map((l, i) => { const d = lineDec(o, i); return l.desc + ' × ' + l.qty + (d ? (d.status === 'approved' ? ' \u2713' : ' \u2717') : ''); }).join('; ')}),
+        el('td', {class: 'num mono'}, document.createTextNode(Number(o.total).toLocaleString('en-SG', {minimumFractionDigits: 2})), st === 'partial' || decidedAny && st === 'pending' ? el('span', {class: 'sub', text: 'Approved ' + money(o.lines.reduce((a, l, i) => { const d = lineDec(o, i); return a + (d && d.status === 'approved' ? Number(l.value) : 0); }, 0))}) : null),
+        el('td', {}, el('span', {class: 'pill ' + (st === 'approved' ? 'p-ok' : st === 'rejected' ? 'p-bad' : st === 'partial' ? 'p-warn' : 'p-pend'), text: stLabel})),
+        el('td', {}, d ? el('span', {text: dt(d.at)}) : document.createTextNode('—'), d ? el('span', {class: 'sub', text: ((ps[d.by] && ps[d.by].name) || 'GM') + (d.note ? ' · ' + d.note : '')}) : null),
+        el('td', {}, cancel)));
+    });
+  }
+  ['histSite', 'histStatus'].forEach((id) => $(id).addEventListener('change', renderHistory));
+  function stat(k, v, s, bad) { return el('div', {class: 'stat'}, el('div', {class: 'k', text: k}), el('div', {class: 'v' + (bad ? ' bad' : ''), text: v}), el('div', {class: 's', text: s || ''})); }
+
+  // ---------- render: inventory ----------
+  function renderStock() {
+    const q = $('invSearch').value.trim().toLowerCase(), cat = $('invFilter').value, site = mySite();
+    const sites = S.sites.map((s) => s.id);
+    let central = 0, atSites = 0; const perSite = Object.fromEntries(sites.map((s) => [s, 0]));
+    S.stock.forEach((i) => { central += i.central * i.cost; sites.forEach((s) => { const v = Number((i.sites || {})[s] || 0) * i.cost; perSite[s] += v; atSites += v; }); });
+    const outC = S.stock.filter((i) => Number(i.central) <= 0).length;
+    const strip = $('stockStrip'); strip.replaceChildren(
+      stat('Total stock value', money0(central + atSites), S.stock.length + ' items'),
+      stat('Central store', money0(central), 'Available to issue'),
+      stat('At branches', money0(atSites), sites.length + ' branches'),
+      stat('Out at central store', String(outC), outC ? 'Cannot be issued until delivered' : 'All items available', outC > 0));
+    if (site) strip.append(stat(site + ' holds', money0(perSite[site]), siteName(site)));
+
+    $('invHead').replaceChildren(el('tr', {}, el('th', {text: 'Item'}), el('th', {class: 'num', text: 'Unit cost'}), el('th', {class: 'num', text: 'Central'}),
+      ...sites.map((s) => el('th', {class: 'num' + (s === site ? ' mine' : ''), text: s})), el('th', {class: 'num', text: 'Total qty'}), el('th', {class: 'num', text: 'Value'}), el('th', {text: 'Status'})));
+    $('invEmpty').hidden = S.stock.length > 0;
+    const body = $('invBody'); body.replaceChildren();
+    S.stock.filter((i) => (!cat || i.cat === cat) && (!q || (i.desc + ' ' + i.sku).toLowerCase().includes(q))).forEach((i) => {
+      const tot = Number(i.central) + sites.reduce((a, s) => a + Number((i.sites || {})[s] || 0), 0);
+      const ss = Math.ceil(Number(i.daily || 0) * 7);
+      const st = tot === 0 ? ['Out of stock', 'p-bad'] : tot <= ss ? ['Critical', 'p-bad'] : tot <= Number(i.rop || 0) ? ['Reorder', 'p-warn'] : ['OK', 'p-ok'];
+      body.append(el('tr', {},
+        el('td', {}, el('span', {text: i.desc}), el('span', {class: 'sub mono', text: i.sku + ' · ' + i.unit})),
+        el('td', {class: 'num mono', text: money(i.cost)}),
+        el('td', {class: 'num mono' + (Number(i.central) <= 0 ? ' short' : ''), text: n0(i.central)}),
+        ...sites.map((s) => el('td', {class: 'num mono' + (s === site ? ' mine' : ''), text: n0((i.sites || {})[s] || 0)})),
+        el('td', {class: 'num mono', text: n0(tot)}),
+        el('td', {class: 'num mono', text: money(tot * i.cost)}),
+        el('td', {}, el('span', {class: 'pill ' + st[1], text: st[0]}))));
+    });
+    $('invFoot').replaceChildren(S.stock.length ? el('tr', {}, el('td', {}, el('strong', {text: 'Value by location'})), el('td', {}),
+      el('td', {class: 'num mono', text: money0(central)}), ...sites.map((s) => el('td', {class: 'num mono' + (s === site ? ' mine' : ''), text: money0(perSite[s])})),
+      el('td', {}), el('td', {class: 'num mono', text: money0(central + atSites)}), el('td', {})) : '');
+  }
+  ['invSearch', 'invFilter'].forEach((id) => $(id).addEventListener('input', renderStock));
+
+  async function names(ids) {
+    ids = [...new Set(ids.filter(Boolean))];
+    if (!S.user || !ids.length) return {};
+    try { return await S.user.profiles(ids); } catch (e) { return {}; }
+  }
+
+  function renderLow() {
+    const site = mySite(), gm = gmView();
+    $('lowGm').hidden = !gm; $('lowCentral').hidden = true;
+    $('lowBranch').hidden = gm && !site;
+    const strip = $('lowStrip'); strip.replaceChildren();
+    if (gm) {
+      let items = 0, open = 0, val = 0; const rows = [];
+      S.sites.forEach((s) => { const L = lowList(s.id), O = L.filter((x) => !x.pend), v = O.reduce((a, x) => a + x.sug * x.it.cost, 0);
+        items += L.length; open += O.length; val += v;
+        const pend = S.orders.filter((o) => o.site === s.id && statusOf(o) === 'pending').length;
+        rows.push(el('tr', {class: s.id === site ? 'mine' : ''}, el('td', {text: s.id + ' · ' + s.name}), el('td', {class: 'num mono', text: n0(L.length)}),
+          el('td', {class: 'num mono' + (O.length ? ' short' : ''), text: n0(O.length)}), el('td', {class: 'num mono', text: money(v)}), el('td', {class: 'num mono', text: n0(pend)}))); });
+      $('lowGmBody').replaceChildren(...rows);
+      const cen = S.stock.filter((i) => Number(i.central) <= Number(i.rop || 0));
+      $('lowCentralBody').replaceChildren(...cen.map((i) => { const br = S.sites.reduce((a, s) => a + haveAt(i, s.id), 0);
+        return el('tr', {}, el('td', {}, el('span', {text: i.desc}), el('span', {class: 'sub mono', text: i.sku})), el('td', {class: 'num mono' + (Number(i.central) <= 0 ? ' short' : ''), text: n0(i.central)}),
+          el('td', {class: 'num mono', text: n0(br)}), el('td', {class: 'num mono', text: n0(i.rop)}), el('td', {class: 'num mono', text: money(i.cost)}),
+          el('td', {}, el('span', {class: 'pill ' + (Number(i.central) <= 0 ? 'p-bad' : 'p-warn'), text: Number(i.central) <= 0 ? 'Out at central' : 'Reorder'}))); }));
+      strip.append(stat('Low items across branches', n0(items), S.sites.length + ' branches checked', items > 0), stat('Not yet requested', n0(open), money0(val) + ' suggested', open > 0), stat('Central store to reorder', n0(cen.length), 'At or below reorder point', cen.length > 0));
+    }
+    if (!site) { $('lowTitle').textContent = 'Running low at my branch'; $('lowBody').replaceChildren(); $('lowEmpty').hidden = false; $('lowEmptyText').textContent = 'Choose your branch at the top to see what is running low.'; $('lowSel').textContent = ''; $('lowToOrder').disabled = true; return; }
+    $('lowTitle').textContent = 'Running low at ' + site + ' · ' + siteName(site);
+    const L = lowList(site);
+    if (!gm) strip.append(stat('Items running low', n0(L.length), siteName(site), L.length > 0), stat('Not yet requested', n0(L.filter((x) => !x.pend).length), 'Ready to order'),
+      stat('Suggested order value', money0(L.filter((x) => !x.pend).reduce((a, x) => a + x.sug * x.it.cost, 0)), 'At unit cost'));
+    $('lowEmpty').hidden = L.length > 0; $('lowEmptyText').textContent = 'Every item at this branch covers at least 7 days of usage.';
+    const body = $('lowBody'); body.replaceChildren();
+    L.forEach((x) => {
+      const key = site + '|' + x.it.sku; if (!(key in S.lowPick)) S.lowPick[key] = !x.pend;
+      const cb = el('input', {type: 'checkbox', id: 'lp-' + x.it.sku, 'aria-label': 'Include ' + x.it.desc, checked: S.lowPick[key] && !x.pend ? 'checked' : null, disabled: x.pend ? 'disabled' : null});
+      cb.addEventListener('change', () => { S.lowPick[key] = cb.checked; renderLow(); });
+      if (!(key in S.lowQty)) S.lowQty[key] = x.sug;
+      const qv = S.lowQty[key], short = qv > Number(x.it.central);
+      const qi = el('input', {type: 'number', min: '0', step: '1', inputmode: 'numeric', id: 'lq-' + x.it.sku, 'aria-label': 'Order quantity of ' + x.it.desc, value: qv, disabled: x.pend ? 'disabled' : null});
+      const setLQ = (v) => { S.lowQty[key] = Math.max(0, Math.floor(Number(v) || 0)); if (S.lowQty[key] > 0) S.lowPick[key] = true; renderLow(); };
+      qi.addEventListener('change', () => setLQ(qi.value));
+      body.append(el('tr', {},
+        el('td', {}, cb),
+        el('td', {}, el('span', {text: x.it.desc}), el('span', {class: 'sub mono', text: x.it.sku + ' · ' + x.it.unit})),
+        el('td', {class: 'num mono short', text: n0(x.have)}),
+        el('td', {class: 'num mono', text: n0(x.need)}),
+        el('td', {class: 'num mono', text: x.days == null ? '—' : x.days.toFixed(1)}),
+        el('td', {class: 'num mono', text: n0(x.sug)}),
+        el('td', {}, el('div', {class: 'qty'}, el('button', {type: 'button', 'aria-label': 'Decrease', text: '\u2212', disabled: x.pend ? 'disabled' : null, onclick: () => setLQ(qv - 1)}), qi, el('button', {type: 'button', 'aria-label': 'Increase', text: '+', disabled: x.pend ? 'disabled' : null, onclick: () => setLQ(qv + 1)})),
+          qv > x.sug ? el('span', {class: 'over', text: '+' + n0(qv - x.sug) + ' above recommended'}) : null),
+        el('td', {class: 'num mono' + (short ? ' short' : ''), text: n0(x.it.central)}),
+        el('td', {class: 'num mono', text: money(qv * x.it.cost)}),
+        el('td', {}, x.pend ? el('span', {class: 'pill p-pend', text: 'Requested · ' + x.pend.ref}) : el('span', {class: 'pill ' + (x.have === 0 ? 'p-bad' : 'p-warn'), text: x.have === 0 ? 'Out at branch' : 'Low'}), short && !x.pend ? el('span', {class: 'why', text: 'Central store is short'}) : null)));
+    });
+    const picked = L.filter((x) => !x.pend && S.lowPick[site + '|' + x.it.sku]);
+    $('lowAll').checked = picked.length > 0 && picked.length === L.filter((x) => !x.pend).length;
+    const qOf = (x) => S.lowQty[site + '|' + x.it.sku] ?? x.sug;
+    const overN = picked.filter((x) => qOf(x) > x.sug).length;
+    $('lowSel').textContent = picked.length ? picked.length + ' items selected · ' + money(picked.reduce((a, x) => a + qOf(x) * x.it.cost, 0)) + (overN ? ' · ' + overN + ' above recommended (you\u2019ll be asked why)' : '') : 'Select the items you want to replenish.';
+    $('lowToOrder').disabled = !picked.some((x) => qOf(x) > 0);
+  }
+  $('lowAll').addEventListener('change', () => { const site = mySite(); lowList(site).forEach((x) => { if (!x.pend) S.lowPick[site + '|' + x.it.sku] = $('lowAll').checked; }); renderLow(); });
+  $('lowToOrder').addEventListener('click', () => {
+    const site = mySite();
+    lowList(site).filter((x) => !x.pend && S.lowPick[site + '|' + x.it.sku]).forEach((x) => { const q = S.lowQty[site + '|' + x.it.sku] ?? x.sug; if (q > 0) { S.cart[x.it.sku] = q; S.reasons[x.it.sku] = x.reason; } });
+    const m = $('slipMsg'); m.className = 'notice'; m.textContent = 'Added to your order. Give a reason for any line above the recommended level, then submit for GM approval.'; m.hidden = false;
+    setTab('order');
+  });
+
+  let raf = 0;
+  function render() {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      renderHeader();
+      if (S.tab === 'low') renderLow();
+      if (S.tab === 'order') renderOrder();
+      if (S.tab === 'approve') renderApprovals();
+      if (S.tab === 'orders') renderHistory();
+      if (S.tab === 'stock') renderStock();
+      if (S.tab === 'supply') renderSupply();
+    });
+  }
+
+  // ---------- boot ----------
+  const start = location.hash.slice(1);
+  setTab(['low', 'order', 'approve', 'orders', 'supply', 'stock'].includes(start) ? start : 'low');
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['low', 'order', 'approve', 'orders', 'supply', 'stock'].includes(h) && h !== S.tab) setTab(h); });
+
+  (async () => {
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    S.db = db; S.user = user;
+    if (user) {
+      const me = await user.me(); S.me = me.id; S.isOwner = me.isOwner; S.canEdit = me.canEdit;
+      S.writeOk = await user.can('data.write');
+      S.asGm = isGm();
+      if (!isGm()) setTab(S.tab === 'approve' ? 'orders' : S.tab);
+    }
+    if (!db) { showMsg('Sign in to claude.ai to place or approve orders. Stock and orders can’t load in this view.', ''); render(); return; }
+    const err = () => showMsg('Live updates stopped. Reload the page to reconnect.', 'bad');
+    db.collection('stock').onSnapshot((snap) => { S.stock = snap.docs.map((d) => d.data()).sort((a, b) => a.sku < b.sku ? -1 : 1); fillCats(); render(); }, err);
+    db.doc('config/sites').onSnapshot((d) => { S.sites = (d.exists && d.data().list) || []; fillSiteSelects(); render(); }, err);
+    db.doc('config/roles').onSnapshot((d) => { S.roles = (d.exists && d.data()) || {gm: []}; if (isGm() && !S.user) S.asGm = true; render(); }, err);
+    db.collection('orders').onSnapshot((snap) => { S.orders = snap.docs.map((d) => Object.assign({id: d.id}, d.data())); render(); }, err);
+    db.collection('decisions').onSnapshot((snap) => { S.decisions = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()])); render(); }, err);
+    db.doc('config/suppliers').onSnapshot((d) => { S.suppliers = (d.exists && d.data().list) || []; render(); }, err);
+    db.collection('purchase').onSnapshot((snap) => { S.pos = snap.docs.map((d) => Object.assign({id: d.id}, d.data())); render(); }, err);
+  })();
+})();
+</script>
