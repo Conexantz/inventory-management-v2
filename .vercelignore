@@ -1,0 +1,6 @@
+agent/
+app/
+dashboard/
+data/
+docs/
+*.py

@@ -8,7 +8,9 @@ All data in this repository is sample data built for the case study (one central
 
 | Path | What it is |
 |---|---|
-| `app/index.html` | **StockSense Orders** – the interactive app for branch managers and the General Manager (see below). |
+| `index.html` | **StockSense Orders, standalone** – the version to deploy on Vercel or any static host. Data is saved in the viewer's browser. |
+| `app/index.html` | **StockSense Orders** – the interactive app for branch managers and the General Manager, as it runs inside claude.ai (see below). |
+| `vercel.json`, `.vercelignore` | Vercel settings: static site, no build step, only the root `index.html` is deployed. |
 | `agent/stocksense_agent.py` | Daily replenishment agent: reads the master inventory workbook, reconciles usage, forecasts 14-day demand, calculates reorder points, proposes transfers, drafts POs and the WhatsApp message. |
 | `agent/stocksense_central_replenish.py` | Central-store auto-replenishment check, the same rule the app uses. Used by the daily scheduled run. |
 | `dashboard/index.html` | Page for the StockSense replenishment dashboard (data comes from the run outputs). |
@@ -27,7 +29,23 @@ Tabs:
 - **Supplier orders** (General Manager) – central store cover for every item and supplier purchase orders raised automatically.
 - **Inventory & costing** – balances at the central store and each branch, valued at unit cost.
 
-The app runs as a Claude artifact. It uses the artifact `db` capability for shared data and the `user` capability for roles, so `index.html` does not run on its own outside claude.ai.
+`app/index.html` runs as a Claude artifact. It uses the artifact `db` capability for shared data and the `user` capability for roles, so it does not run on its own outside claude.ai.
+
+## Deploying on Vercel
+
+The root `index.html` is the same app with a small built-in runtime in place of the claude.ai capabilities. It needs no build step.
+
+1. In Vercel, **Add New → Project** and import this repository.
+2. Leave **Framework Preset** as *Other*, **Root Directory** as `./`, and leave the build and output settings empty (they come from `vercel.json`).
+3. Deploy.
+
+In this standalone version:
+
+- Orders, approvals, stock balances and supplier orders are saved in the viewer's browser (localStorage). Each person and each device has their own copy, so a branch manager's order won't reach the General Manager on another computer.
+- The viewer is the General Manager, with a **Branch view / GM view** toggle at the top to act as a branch manager.
+- **Reset demo data** at the top of the page restores the sample stock.
+
+To share data between branch managers and the General Manager across devices, the storage functions at the top of `index.html` (the `StockSense standalone runtime` script) need a backend such as Supabase, with a sign-in to tell branch managers from the General Manager.
 
 ### Central store replenishment rule
 
